@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tablero San Marcos</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap">
+<style>
+  :root{
+    --bg: #EEF1F4;
+    --surface: #FFFFFF;
+    --surface-2: #F4F6F8;
+    --ink: #16233D;
+    --sub: #5B6675;
+    --line: #D9DEE4;
+    --accent: #1F4E79;
+    --accent-ink: #EAF1F8;
+    --critical: #A6291F;
+    --critical-bg: #FBEAE8;
+    --warning: #9C6A12;
+    --warning-bg: #FBF1DD;
+    --good: #29694A;
+    --good-bg: #E6F2EB;
+    --neutral-bg: #ECEEF1;
+    --shadow: none;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg: #10151F;
+      --surface: #171E2B;
+      --surface-2: #1D2635;
+      --ink: #E8ECF2;
+      --sub: #93A0B2;
+      --line: #2B3446;
+      --accent: #7FAEDD;
+      --accent-ink: #0E2436;
+      --critical: #E9847A;
+      --critical-bg: #3A1D1B;
+      --warning: #E3B15A;
+      --warning-bg: #3A2E14;
+      --good: #7FCBA1;
+      --good-bg: #163427;
+      --neutral-bg: #232C3C;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg: #10151F;
+    --surface: #171E2B;
+    --surface-2: #1D2635;
+    --ink: #E8ECF2;
+    --sub: #93A0B2;
+    --line: #2B3446;
+    --accent: #7FAEDD;
+    --accent-ink: #0E2436;
+    --critical: #E9847A;
+    --critical-bg: #3A1D1B;
+    --warning: #E3B15A;
+    --warning-bg: #3A2E14;
+    --good: #7FCBA1;
+    --good-bg: #163427;
+    --neutral-bg: #232C3C;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"IBM Plex Sans",-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+    padding-inline:20px;
+    padding-block:24px;
+  }
+  .wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:20px;}
+
+  h1,h2,h3{font-family:"Big Shoulders Display","Archivo Expanded",Impact,sans-serif;margin:0;letter-spacing:.01em;}
+  .mono, .num{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums;}
+
+  /* ---------- Header ---------- */
+  header{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:20px 24px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:16px;
+    justify-content:space-between;
+    align-items:flex-start;
+  }
+  .titleblock{display:flex;flex-direction:column;gap:6px;min-width:260px;}
+  .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);font-weight:600;}
+  h1{font-size:26px;font-weight:700;text-wrap:balance;}
+  .subline{color:var(--sub);font-size:13px;}
+  .meta{display:flex;flex-direction:column;gap:4px;align-items:flex-end;text-align:right;font-size:12.5px;color:var(--sub);}
+  .meta strong{color:var(--ink);font-weight:600;}
+
+  .semaforo{
+    display:flex;align-items:center;gap:10px;
+    padding:10px 16px;border-radius:4px;
+    background:var(--critical-bg);color:var(--critical);
+    border:1px solid color-mix(in srgb, var(--critical) 35%, transparent);
+    font-weight:600;font-size:13.5px;
+  }
+  .semaforo .dot{width:9px;height:9px;border-radius:50%;background:var(--critical);flex:none;}
+  .semaforo-msg{color:var(--ink);font-weight:400;}
+
+  /* ---------- KPI row ---------- */
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;}
+  .kpi{
+    background:var(--surface);border:1px solid var(--line);border-radius:4px;
+    padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0;
+  }
+  .kpi .label{font-size:11.5px;color:var(--sub);text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
+  .kpi .value{font-size:26px;font-weight:600;line-height:1;}
+  .kpi .value small{font-size:14px;font-weight:500;color:var(--sub);}
+  .kpi .foot{font-size:12px;color:var(--sub);}
+  .kpi.flag-critical .value{color:var(--critical);}
+  .kpi.flag-warning .value{color:var(--warning);}
+  .kpi.flag-good .value{color:var(--good);}
+
+  /* ---------- Layout grid ---------- */
+  .grid{display:grid;grid-template-columns:1.7fr 1fr;gap:16px;align-items:start;}
+
+  .panel{
+    background:var(--surface);border:1px solid var(--line);border-radius:4px;
+    padding:18px 20px;display:flex;flex-direction:column;gap:14px;
+  }
+  .panel h2{font-size:16px;font-weight:700;}
+  .panel-sub{font-size:12px;color:var(--sub);margin-top:-8px;}
+
+  /* ---------- Partidas table ---------- */
+  .table-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between;}
+  .search{
+    background:var(--surface-2);border:1px solid var(--line);border-radius:4px;
+    padding:6px 10px;font-size:12.5px;color:var(--ink);width:200px;font-family:inherit;
+  }
+  .search:focus{outline:2px solid var(--accent);outline-offset:1px;}
+  .legend{display:flex;gap:10px;font-size:11.5px;color:var(--sub);flex-wrap:wrap;}
+  .legend span{display:inline-flex;align-items:center;gap:5px;}
+  .legend i{width:8px;height:8px;border-radius:50%;display:inline-block;}
+
+  .table-scroll{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:640px;}
+  thead th{
+    text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;
+    color:var(--sub);border-bottom:1px solid var(--line);padding:0 10px 8px;
+    cursor:pointer;user-select:none;white-space:nowrap;font-weight:600;
+  }
+  thead th:hover{color:var(--ink);}
+  thead th .arrow{opacity:.5;font-size:10px;margin-left:3px;}
+  tbody td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr.is-critical{background:color-mix(in srgb, var(--critical-bg) 55%, transparent);}
+  .item-cell{color:var(--sub);white-space:nowrap;}
+  .partida-cell{font-weight:600;display:flex;align-items:center;gap:6px;}
+  .rc-badge{
+    font-size:9.5px;font-weight:700;letter-spacing:.04em;color:var(--accent);
+    border:1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+    border-radius:3px;padding:1px 4px;white-space:nowrap;
+  }
+  .bars{display:flex;flex-direction:column;gap:3px;min-width:120px;}
+  .bar-track{position:relative;height:6px;border-radius:3px;background:var(--neutral-bg);overflow:hidden;}
+  .bar-fill{position:absolute;inset:0 auto 0 0;border-radius:3px;}
+  .bar-fill.programado{background:var(--sub);opacity:.55;}
+  .bar-fill.ejecutado{background:var(--accent);}
+  .bar-caption{font-size:10px;color:var(--sub);display:flex;gap:8px;}
+  .estado-pill{
+    display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;white-space:nowrap;
+  }
+  .estado-critico{background:var(--critical-bg);color:var(--critical);}
+  .estado-riesgo{background:var(--warning-bg);color:var(--warning);}
+  .estado-plazo{background:var(--good-bg);color:var(--good);}
+  .estado-adelantada{background:var(--neutral-bg);color:var(--sub);}
+  .estado-ventana{background:var(--neutral-bg);color:var(--sub);font-style:italic;}
+  .brecha{font-weight:600;}
+  .brecha.neg{color:var(--critical);}
+  .brecha.pos{color:var(--sub);}
+
+  /* ---------- Sidebar stacked panels ---------- */
+  .side{display:flex;flex-direction:column;gap:16px;}
+
+  .ppc-compare{display:flex;gap:18px;align-items:flex-end;}
+  .ppc-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;}
+  .ppc-bar-track{width:100%;height:110px;background:var(--neutral-bg);border-radius:4px;position:relative;display:flex;align-items:flex-end;}
+  .ppc-bar-fill{width:100%;border-radius:4px;}
+  .ppc-bar-fill.last{background:var(--warning);}
+  .ppc-bar-fill.avg{background:var(--accent);opacity:.55;}
+  .ppc-bar-value{font-size:15px;font-weight:700;}
+  .ppc-bar-label{font-size:11px;color:var(--sub);text-align:center;}
+
+  .list{display:flex;flex-direction:column;gap:0;}
+  .list-item{
+    display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);align-items:flex-start;
+  }
+  .list-item:last-child{border-bottom:none;}
+  .chip-days{
+    flex:none;font-size:11px;font-weight:700;padding:2px 7px;border-radius:99px;white-space:nowrap;margin-top:1px;
+  }
+  .chip-days.urgent{background:var(--critical-bg);color:var(--critical);}
+  .chip-days.soon{background:var(--warning-bg);color:var(--warning);}
+  .chip-days.ok{background:var(--neutral-bg);color:var(--sub);}
+  .list-body{display:flex;flex-direction:column;gap:2px;min-width:0;}
+  .list-title{font-size:13px;font-weight:500;}
+  .list-meta{font-size:11.5px;color:var(--sub);}
+
+  .sev-pill{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:99px;flex:none;margin-top:1px;}
+  .sev-alta{background:var(--critical-bg);color:var(--critical);}
+  .sev-media{background:var(--warning-bg);color:var(--warning);}
+  .sev-baja{background:var(--neutral-bg);color:var(--sub);}
+
+  .bim-flag{
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
+    background:var(--warning-bg);border-radius:4px;padding:10px 12px;font-size:12.5px;
+  }
+  .bim-flag .num{color:var(--warning);font-weight:700;}
+
+  footer{
+    font-size:11.5px;color:var(--sub);padding:14px 4px 4px;border-top:1px solid var(--line);
+    display:flex;flex-wrap:wrap;gap:6px 18px;justify-content:space-between;
+  }
+
+  @media (max-width:860px){
+    .grid{grid-template-columns:1fr;}
+    .kpis{grid-template-columns:repeat(2,1fr);}
+    header{flex-direction:column;}
+    .meta{align-items:flex-start;text-align:left;}
+  }
+  @media (max-width:480px){
+    .kpis{grid-template-columns:1fr 1fr;}
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header>
+    <div class="titleblock">
+      <span class="eyebrow">Tablero de obra · Informe semanal N.º 13</span>
+      <h1>Mejoramiento del Centro de Salud San Marcos — Nivel I-3</h1>
+      <span class="subline">San Marcos, San Román, Puno · Contrato N.º 018-2026-MDSM · Consorcio Altiplano Sur</span>
+    </div>
+    <div class="meta">
+      <span>Corte <strong class="mono">04/08/2026</strong> (anterior 28/07/2026)</span>
+      <span>Día de plazo <strong class="mono">92 / 180</strong></span>
+      <span>Fin contractual <strong class="mono">01/11/2026</strong></span>
+    </div>
+  </header>
+
+  <div class="semaforo">
+    <span class="dot"></span>
+    <span>CRÍTICO</span>
+    <span class="semaforo-msg">— «Concreto en columnas» va 29,3 pp por debajo de lo programado y está en la ruta crítica. La ruta crítica completa acumula 9,9 pp.</span>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi">
+      <span class="label">Programado</span>
+      <span class="value num">42,8<small>%</small></span>
+      <span class="foot">al 04/08/2026</span>
+    </div>
+    <div class="kpi">
+      <span class="label">Ejecutado</span>
+      <span class="value num">43,5<small>%</small></span>
+      <span class="foot">valorizado S/ 575 074,54</span>
+    </div>
+    <div class="kpi flag-warning">
+      <span class="label">Atraso sin compensar</span>
+      <span class="value num">4,2<small>pp</small></span>
+      <span class="foot">suma ponderada, sin netear adelantos</span>
+    </div>
+    <div class="kpi flag-critical">
+      <span class="label">Atraso ruta crítica</span>
+      <span class="value num">9,9<small>pp</small></span>
+      <span class="foot">umbral ámbar 10 pp · rojo 20 pp</span>
+    </div>
+    <div class="kpi">
+      <span class="label">Adelanto / anticipado</span>
+      <span class="value num">3,2<small>pp</small></span>
+      <span class="foot">aparte · + 1,8 pp de trabajo anticipado</span>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- Partidas -->
+    <section class="panel">
+      <div class="table-tools">
+        <h2>Partidas de control</h2>
+        <input class="search" id="search" type="text" placeholder="Buscar partida…" />
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--sub);opacity:.55"></i>Programado</span>
+        <span><i style="background:var(--accent)"></i>Ejecutado</span>
+        <span class="rc-badge" style="padding:1px 4px">RC</span>
+        <span>= ruta crítica</span>
+      </div>
+      <div class="table-scroll">
+        <table id="tabla-partidas">
+          <thead>
+            <tr>
+              <th data-key="item">Ítem <span class="arrow">↕</span></th>
+              <th data-key="partida">Partida <span class="arrow">↕</span></th>
+              <th data-key="peso_pct">Peso <span class="arrow">↕</span></th>
+              <th data-key="avance">Avance <span class="arrow">↕</span></th>
+              <th data-key="brecha_pp">Brecha <span class="arrow">↕</span></th>
+              <th data-key="estado">Estado <span class="arrow">↕</span></th>
+            </tr>
+          </thead>
+          <tbody id="tbody-partidas"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Sidebar -->
+    <aside class="side">
+
+      <section class="panel">
+        <h2>PPC · cumplimiento de compromisos</h2>
+        <div class="panel-sub">Semana 13 frente al promedio de las últimas 8 semanas</div>
+        <div class="ppc-compare">
+          <div class="ppc-bar-wrap">
+            <div class="ppc-bar-track"><div class="ppc-bar-fill last" style="height:57.9%"></div></div>
+            <span class="ppc-bar-value">57,9 %</span>
+            <span class="ppc-bar-label">Semana 13</span>
+          </div>
+          <div class="ppc-bar-wrap">
+            <div class="ppc-bar-track"><div class="ppc-bar-fill avg" style="height:69.8%"></div></div>
+            <span class="ppc-bar-value">69,8 %</span>
+            <span class="ppc-bar-label">Promedio 8 sem.</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Restricciones · vencen en 7 días o menos</h2>
+        <div class="panel-sub">9 de 12 restricciones siguen pendientes</div>
+        <div class="list" id="list-restricciones"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Modelo BIM fuera de tolerancia</h2>
+        <div class="bim-flag">
+          <span>Concreto en vigas y losas</span>
+          <span class="num mono">−4,86 %</span>
+        </div>
+        <div class="panel-sub" style="margin-top:-4px">Tolerancia acordada ±3 %</div>
+      </section>
+
+      <section class="panel">
+        <h2>Incompatibilidades abiertas</h2>
+        <div class="list" id="list-incompatibilidades"></div>
+      </section>
+
+    </aside>
+  </div>
+
+  <footer>
+    <span>Fuente: San-Marcos-datos-de-obra.xlsx (corte 04/08/2026) · calculado con la skill metricas-de-obra, sin cifras a mano.</span>
+    <span>Periodo del informe: 29/07/2026 – 04/08/2026 · Supervisión: Ing. Rosa Mamani Quispe · Residente: Ing. Carlos Huanca Tito</span>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  var partidas = [
+    {item:"01.01",partida:"Obras provisionales",rc:false,peso_pct:3.7,programado_pct:100.0,ejecutado_pct:100.0,brecha_pp:0.0,estado:"En plazo"},
+    {item:"02.01",partida:"Movimiento de tierras",rc:false,peso_pct:14.2,programado_pct:100.0,ejecutado_pct:96.0,brecha_pp:4.0,estado:"En plazo"},
+    {item:"03.01",partida:"Concreto en zapatas",rc:true,peso_pct:12.1,programado_pct:100.0,ejecutado_pct:88.0,brecha_pp:12.0,estado:"En riesgo"},
+    {item:"03.02",partida:"Concreto en columnas",rc:true,peso_pct:7.6,programado_pct:90.2,ejecutado_pct:61.0,brecha_pp:29.3,estado:"Crítico"},
+    {item:"03.03",partida:"Concreto en vigas y losas",rc:true,peso_pct:17.3,programado_pct:27.8,ejecutado_pct:30.0,brecha_pp:-2.2,estado:"Adelantada"},
+    {item:"04.01",partida:"Albañilería",rc:false,peso_pct:14.8,programado_pct:0.0,ejecutado_pct:12.0,brecha_pp:null,estado:"Aún no entra en ventana"},
+    {item:"05.01",partida:"Instalaciones sanitarias",rc:false,peso_pct:14.1,programado_pct:4.0,ejecutado_pct:18.0,brecha_pp:-14.0,estado:"Adelantada"},
+    {item:"06.01",partida:"Instalaciones eléctricas",rc:false,peso_pct:16.3,programado_pct:3.8,ejecutado_pct:9.0,brecha_pp:-5.2,estado:"Adelantada"}
+  ];
+
+  var restricciones = [
+    {id:"R-10",texto:"Firma del protocolo de liberación de columnas eje C (PRT-022)",partida:"Concreto en columnas",responsable:"Supervisión",dias:1},
+    {id:"R-04",texto:"Respuesta del RFI-011: interferencia con la viga V-203",partida:"Concreto en vigas y losas",responsable:"Proyectista",dias:2},
+    {id:"R-07",texto:"Respuesta a la consulta CAR-031 sobre los acuerdos del Acta 07",partida:"Concreto en vigas y losas",responsable:"Supervisión",dias:3},
+    {id:"R-01",texto:"Aprobación de los planos de detalle IIE-PL-201",partida:"Instalaciones eléctricas",responsable:"Supervisión",dias:3},
+    {id:"R-05",texto:"Aprobación de la muestra de ladrillo (SUB-004)",partida:"Albañilería",responsable:"Supervisión",dias:6},
+    {id:"R-02",texto:"Llegada y certificación del acero, lote 3 (SUB-007)",partida:"Concreto en columnas",responsable:"Logística",dias:6}
+  ];
+
+  var incompatibilidades = [
+    {id:"INC-01",texto:"Montante sanitaria Ø4\" atraviesa la viga V-203",severidad:"Alta",doc:"CSSM-CAS-EST-RFI-011"},
+    {id:"INC-02",texto:"Bandeja eléctrica cruza el ducto de extracción del pasillo",severidad:"Media",doc:"Sin documento emitido"},
+    {id:"INC-05",texto:"Tramo de desagüe sin la pendiente mínima",severidad:"Baja",doc:"En revisión del proyectista"}
+  ];
+
+  function fmt1(n){ return n.toLocaleString("es-PE",{minimumFractionDigits:1,maximumFractionDigits:1}); }
+
+  function estadoClass(estado){
+    switch(estado){
+      case "Crítico": return "estado-critico";
+      case "En riesgo": return "estado-riesgo";
+      case "En plazo": return "estado-plazo";
+      case "Adelantada": return "estado-adelantada";
+      default: return "estado-ventana";
+    }
+  }
+
+  var sortKey = "item", sortDir = 1;
+  var searchTerm = "";
+
+  function render(){
+    var rows = partidas.filter(function(p){
+      return p.partida.toLowerCase().indexOf(searchTerm) !== -1 || p.item.indexOf(searchTerm) !== -1;
+    });
+    rows.sort(function(a,b){
+      var av = a[sortKey], bv = b[sortKey];
+      if (sortKey === "brecha_pp"){ av = av === null ? -999 : av; bv = bv === null ? -999 : bv; }
+      if (typeof av === "string") return sortDir * av.localeCompare(bv, "es");
+      return sortDir * ((av>bv) - (av<bv));
+    });
+
+    var tbody = document.getElementById("tbody-partidas");
+    tbody.innerHTML = rows.map(function(p){
+      var brechaTxt = p.brecha_pp === null ? "·" : (p.brecha_pp > 0 ? "+" : "") + fmt1(p.brecha_pp) + " pp";
+      var brechaClass = p.brecha_pp === null ? "" : (p.brecha_pp > 0 ? "neg" : "pos");
+      return (
+        '<tr class="' + (p.estado === "Crítico" ? "is-critical" : "") + '">' +
+          '<td class="item-cell mono">' + p.item + '</td>' +
+          '<td><span class="partida-cell">' + p.partida + (p.rc ? ' <span class="rc-badge">RC</span>' : '') + '</span></td>' +
+          '<td class="mono">' + fmt1(p.peso_pct) + ' %</td>' +
+          '<td><div class="bars">' +
+            '<div class="bar-track"><div class="bar-fill programado" style="width:' + p.programado_pct + '%"></div></div>' +
+            '<div class="bar-track"><div class="bar-fill ejecutado" style="width:' + p.ejecutado_pct + '%"></div></div>' +
+            '<div class="bar-caption mono"><span>P ' + fmt1(p.programado_pct) + '%</span><span>E ' + fmt1(p.ejecutado_pct) + '%</span></div>' +
+          '</div></td>' +
+          '<td class="brecha mono ' + brechaClass + '">' + brechaTxt + '</td>' +
+          '<td><span class="estado-pill ' + estadoClass(p.estado) + '">' + p.estado + '</span></td>' +
+        '</tr>'
+      );
+    }).join("");
+  }
+
+  document.querySelectorAll("#tabla-partidas thead th").forEach(function(th){
+    th.addEventListener("click", function(){
+      var key = th.getAttribute("data-key");
+      if (sortKey === key){ sortDir *= -1; } else { sortKey = key; sortDir = (key === "partida" || key === "estado") ? 1 : -1; }
+      document.querySelectorAll("#tabla-partidas thead .arrow").forEach(function(a){ a.textContent = "↕"; });
+      th.querySelector(".arrow").textContent = sortDir === 1 ? "↑" : "↓";
+      render();
+    });
+  });
+
+  document.getElementById("search").addEventListener("input", function(e){
+    searchTerm = e.target.value.trim().toLowerCase();
+    render();
+  });
+
+  render();
+
+  var listR = document.getElementById("list-restricciones");
+  listR.innerHTML = restricciones.map(function(r){
+    var cls = r.dias <= 2 ? "urgent" : (r.dias <= 4 ? "soon" : "ok");
+    return (
+      '<div class="list-item">' +
+        '<span class="chip-days ' + cls + '">' + r.dias + ' d</span>' +
+        '<div class="list-body">' +
+          '<span class="list-title">' + r.texto + '</span>' +
+          '<span class="list-meta">' + r.id + ' · ' + r.partida + ' · ' + r.responsable + '</span>' +
+        '</div>' +
+      '</div>'
+    );
+  }).join("");
+
+  var listI = document.getElementById("list-incompatibilidades");
+  listI.innerHTML = incompatibilidades.map(function(i){
+    var sevClass = i.severidad === "Alta" ? "sev-alta" : (i.severidad === "Media" ? "sev-media" : "sev-baja");
+    return (
+      '<div class="list-item">' +
+        '<span class="sev-pill ' + sevClass + '">' + i.severidad + '</span>' +
+        '<div class="list-body">' +
+          '<span class="list-title">' + i.texto + '</span>' +
+          '<span class="list-meta">' + i.id + ' · ' + i.doc + '</span>' +
+        '</div>' +
+      '</div>'
+    );
+  }).join("");
+})();
+</script>
+</body>
+</html>
