@@ -1,486 +1,3232 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tablero San Marcos</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap">
+<title>Tablero de obra · San Marcos</title>
 <style>
   :root{
-    --bg: #EEF1F4;
-    --surface: #FFFFFF;
-    --surface-2: #F4F6F8;
-    --ink: #16233D;
-    --sub: #5B6675;
-    --line: #D9DEE4;
-    --accent: #1F4E79;
-    --accent-ink: #EAF1F8;
-    --critical: #A6291F;
-    --critical-bg: #FBEAE8;
-    --warning: #9C6A12;
-    --warning-bg: #FBF1DD;
-    --good: #29694A;
-    --good-bg: #E6F2EB;
-    --neutral-bg: #ECEEF1;
-    --shadow: none;
-    color-scheme: light;
+    --bg:#f5f6f8; --card:#fff; --ink:#1c2430; --mut:#5d6877; --line:#dfe3e9;
+    --ok:#1f7a4d; --ok-bg:#e4f4ea; --warn:#a66300; --warn-bg:#fdf0d5; --bad:#b3261e; --bad-bg:#fbe3e1;
+    --gray:#6b7380; --gray-bg:#eceef1; --prog:#5d6877; --ejec:#1456b8; --crit:#c2410c;
   }
-  @media (prefers-color-scheme: dark){
-    :root:not([data-theme="light"]){
-      --bg: #10151F;
-      --surface: #171E2B;
-      --surface-2: #1D2635;
-      --ink: #E8ECF2;
-      --sub: #93A0B2;
-      --line: #2B3446;
-      --accent: #7FAEDD;
-      --accent-ink: #0E2436;
-      --critical: #E9847A;
-      --critical-bg: #3A1D1B;
-      --warning: #E3B15A;
-      --warning-bg: #3A2E14;
-      --good: #7FCBA1;
-      --good-bg: #163427;
-      --neutral-bg: #232C3C;
-    }
+  @media (prefers-color-scheme:dark){
+    :root{--bg:#12161c; --card:#1b212a; --ink:#e8ecf2; --mut:#9aa5b4; --line:#2e3744;
+      --ok:#58c58d; --ok-bg:#16301f; --warn:#f0b341; --warn-bg:#3a2d10; --bad:#ff8a80; --bad-bg:#40191a;
+      --gray:#9aa5b4; --gray-bg:#262d37; --prog:#9aa5b4; --ejec:#6aa6ff; --crit:#ff9a5c;}
   }
-  :root[data-theme="dark"]{
-    --bg: #10151F;
-    --surface: #171E2B;
-    --surface-2: #1D2635;
-    --ink: #E8ECF2;
-    --sub: #93A0B2;
-    --line: #2B3446;
-    --accent: #7FAEDD;
-    --accent-ink: #0E2436;
-    --critical: #E9847A;
-    --critical-bg: #3A1D1B;
-    --warning: #E3B15A;
-    --warning-bg: #3A2E14;
-    --good: #7FCBA1;
-    --good-bg: #163427;
-    --neutral-bg: #232C3C;
-  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,"Segoe UI",Roboto,Arial,sans-serif}
+  .wrap{max-width:1100px;margin:0 auto;padding:20px 16px 40px}
+  h1{font-size:1.35rem;margin:0 0 4px}
+  .sub{color:var(--mut);margin:0 0 18px}
+  h2{font-size:1.05rem;margin:0 0 10px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .card .lbl{color:var(--mut);font-size:.82rem;text-transform:uppercase;letter-spacing:.04em}
+  .card .val{font-size:2rem;font-weight:700;margin-top:2px}
+  .card .nota{color:var(--mut);font-size:.82rem}
+  .sem{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-bottom:14px;border-left-width:8px}
+  .sem .estado{font-size:1.6rem;font-weight:800;padding:4px 14px;border-radius:8px}
+  .sem .det{flex:1;min-width:240px}
+  .sem .det b{font-weight:700}
+  .t-bad{background:var(--bad-bg);color:var(--bad)} .t-warn{background:var(--warn-bg);color:var(--warn)} .t-ok{background:var(--ok-bg);color:var(--ok)}
+  .sem.bad{border-left-color:var(--bad)} .sem.warn{border-left-color:var(--warn)} .sem.ok{border-left-color:var(--ok)}
+  .tablewrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:.92rem}
+  th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{color:var(--mut);font-weight:600;font-size:.8rem;text-transform:uppercase;letter-spacing:.03em}
+  td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+  tr.bad td{background:var(--bad-bg)} tr.warn td{background:var(--warn-bg)} tr.ok td{background:transparent}
+  tr.gray td{background:var(--gray-bg);color:var(--gray)}
+  .tag{display:inline-block;font-size:.72rem;font-weight:700;padding:1px 7px;border-radius:99px;border:1px solid currentColor}
+  .tag.rc{color:var(--crit)}
+  .estado-c{font-weight:600}
+  tr.bad .estado-c{color:var(--bad)} tr.warn .estado-c{color:var(--warn)} tr.ok .estado-c{color:var(--ok)}
+  .leyenda{display:flex;gap:14px;flex-wrap:wrap;color:var(--mut);font-size:.82rem;margin-top:10px}
+  .leyenda i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+  .charts{display:grid;grid-template-columns:3fr 2fr;gap:12px;margin-top:14px}
+  svg{width:100%;height:auto;display:block}
+  svg text{fill:var(--mut);font:11px system-ui,sans-serif}
+  svg .grid{stroke:var(--line);stroke-width:1}
+  svg .ax{stroke:var(--mut);stroke-width:1}
+  .lg{display:flex;gap:14px;flex-wrap:wrap;font-size:.8rem;color:var(--mut);margin-top:6px}
+  .lg span{display:inline-flex;align-items:center;gap:6px}
+  .lg svg{width:26px;height:8px}
+  @media (max-width:760px){.grid3{grid-template-columns:1fr}.charts{grid-template-columns:1fr}}
 
-  *{box-sizing:border-box;}
-  body{
-    margin:0;
-    background:var(--bg);
-    color:var(--ink);
-    font-family:"IBM Plex Sans",-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
-    padding-inline:20px;
-    padding-block:24px;
-  }
-  .wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:20px;}
-
-  h1,h2,h3{font-family:"Big Shoulders Display","Archivo Expanded",Impact,sans-serif;margin:0;letter-spacing:.01em;}
-  .mono, .num{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums;}
-
-  /* ---------- Header ---------- */
-  header{
-    background:var(--surface);
-    border:1px solid var(--line);
-    border-radius:4px;
-    padding:20px 24px;
-    display:flex;
-    flex-wrap:wrap;
-    gap:16px;
-    justify-content:space-between;
-    align-items:flex-start;
-  }
-  .titleblock{display:flex;flex-direction:column;gap:6px;min-width:260px;}
-  .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--sub);font-weight:600;}
-  h1{font-size:26px;font-weight:700;text-wrap:balance;}
-  .subline{color:var(--sub);font-size:13px;}
-  .meta{display:flex;flex-direction:column;gap:4px;align-items:flex-end;text-align:right;font-size:12.5px;color:var(--sub);}
-  .meta strong{color:var(--ink);font-weight:600;}
-
-  .semaforo{
-    display:flex;align-items:center;gap:10px;
-    padding:10px 16px;border-radius:4px;
-    background:var(--critical-bg);color:var(--critical);
-    border:1px solid color-mix(in srgb, var(--critical) 35%, transparent);
-    font-weight:600;font-size:13.5px;
-  }
-  .semaforo .dot{width:9px;height:9px;border-radius:50%;background:var(--critical);flex:none;}
-  .semaforo-msg{color:var(--ink);font-weight:400;}
-
-  /* ---------- KPI row ---------- */
-  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;}
-  .kpi{
-    background:var(--surface);border:1px solid var(--line);border-radius:4px;
-    padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0;
-  }
-  .kpi .label{font-size:11.5px;color:var(--sub);text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
-  .kpi .value{font-size:26px;font-weight:600;line-height:1;}
-  .kpi .value small{font-size:14px;font-weight:500;color:var(--sub);}
-  .kpi .foot{font-size:12px;color:var(--sub);}
-  .kpi.flag-critical .value{color:var(--critical);}
-  .kpi.flag-warning .value{color:var(--warning);}
-  .kpi.flag-good .value{color:var(--good);}
-
-  /* ---------- Layout grid ---------- */
-  .grid{display:grid;grid-template-columns:1.7fr 1fr;gap:16px;align-items:start;}
-
-  .panel{
-    background:var(--surface);border:1px solid var(--line);border-radius:4px;
-    padding:18px 20px;display:flex;flex-direction:column;gap:14px;
-  }
-  .panel h2{font-size:16px;font-weight:700;}
-  .panel-sub{font-size:12px;color:var(--sub);margin-top:-8px;}
-
-  /* ---------- Partidas table ---------- */
-  .table-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between;}
-  .search{
-    background:var(--surface-2);border:1px solid var(--line);border-radius:4px;
-    padding:6px 10px;font-size:12.5px;color:var(--ink);width:200px;font-family:inherit;
-  }
-  .search:focus{outline:2px solid var(--accent);outline-offset:1px;}
-  .legend{display:flex;gap:10px;font-size:11.5px;color:var(--sub);flex-wrap:wrap;}
-  .legend span{display:inline-flex;align-items:center;gap:5px;}
-  .legend i{width:8px;height:8px;border-radius:50%;display:inline-block;}
-
-  .table-scroll{overflow-x:auto;}
-  table{width:100%;border-collapse:collapse;font-size:13px;min-width:640px;}
-  thead th{
-    text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;
-    color:var(--sub);border-bottom:1px solid var(--line);padding:0 10px 8px;
-    cursor:pointer;user-select:none;white-space:nowrap;font-weight:600;
-  }
-  thead th:hover{color:var(--ink);}
-  thead th .arrow{opacity:.5;font-size:10px;margin-left:3px;}
-  tbody td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle;}
-  tbody tr:last-child td{border-bottom:none;}
-  tbody tr.is-critical{background:color-mix(in srgb, var(--critical-bg) 55%, transparent);}
-  .item-cell{color:var(--sub);white-space:nowrap;}
-  .partida-cell{font-weight:600;display:flex;align-items:center;gap:6px;}
-  .rc-badge{
-    font-size:9.5px;font-weight:700;letter-spacing:.04em;color:var(--accent);
-    border:1px solid color-mix(in srgb, var(--accent) 45%, transparent);
-    border-radius:3px;padding:1px 4px;white-space:nowrap;
-  }
-  .bars{display:flex;flex-direction:column;gap:3px;min-width:120px;}
-  .bar-track{position:relative;height:6px;border-radius:3px;background:var(--neutral-bg);overflow:hidden;}
-  .bar-fill{position:absolute;inset:0 auto 0 0;border-radius:3px;}
-  .bar-fill.programado{background:var(--sub);opacity:.55;}
-  .bar-fill.ejecutado{background:var(--accent);}
-  .bar-caption{font-size:10px;color:var(--sub);display:flex;gap:8px;}
-  .estado-pill{
-    display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;white-space:nowrap;
-  }
-  .estado-critico{background:var(--critical-bg);color:var(--critical);}
-  .estado-riesgo{background:var(--warning-bg);color:var(--warning);}
-  .estado-plazo{background:var(--good-bg);color:var(--good);}
-  .estado-adelantada{background:var(--neutral-bg);color:var(--sub);}
-  .estado-ventana{background:var(--neutral-bg);color:var(--sub);font-style:italic;}
-  .brecha{font-weight:600;}
-  .brecha.neg{color:var(--critical);}
-  .brecha.pos{color:var(--sub);}
-
-  /* ---------- Sidebar stacked panels ---------- */
-  .side{display:flex;flex-direction:column;gap:16px;}
-
-  .ppc-compare{display:flex;gap:18px;align-items:flex-end;}
-  .ppc-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;}
-  .ppc-bar-track{width:100%;height:110px;background:var(--neutral-bg);border-radius:4px;position:relative;display:flex;align-items:flex-end;}
-  .ppc-bar-fill{width:100%;border-radius:4px;}
-  .ppc-bar-fill.last{background:var(--warning);}
-  .ppc-bar-fill.avg{background:var(--accent);opacity:.55;}
-  .ppc-bar-value{font-size:15px;font-weight:700;}
-  .ppc-bar-label{font-size:11px;color:var(--sub);text-align:center;}
-
-  .list{display:flex;flex-direction:column;gap:0;}
-  .list-item{
-    display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);align-items:flex-start;
-  }
-  .list-item:last-child{border-bottom:none;}
-  .chip-days{
-    flex:none;font-size:11px;font-weight:700;padding:2px 7px;border-radius:99px;white-space:nowrap;margin-top:1px;
-  }
-  .chip-days.urgent{background:var(--critical-bg);color:var(--critical);}
-  .chip-days.soon{background:var(--warning-bg);color:var(--warning);}
-  .chip-days.ok{background:var(--neutral-bg);color:var(--sub);}
-  .list-body{display:flex;flex-direction:column;gap:2px;min-width:0;}
-  .list-title{font-size:13px;font-weight:500;}
-  .list-meta{font-size:11.5px;color:var(--sub);}
-
-  .sev-pill{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:99px;flex:none;margin-top:1px;}
-  .sev-alta{background:var(--critical-bg);color:var(--critical);}
-  .sev-media{background:var(--warning-bg);color:var(--warning);}
-  .sev-baja{background:var(--neutral-bg);color:var(--sub);}
-
-  .bim-flag{
-    display:flex;justify-content:space-between;align-items:center;gap:10px;
-    background:var(--warning-bg);border-radius:4px;padding:10px 12px;font-size:12.5px;
-  }
-  .bim-flag .num{color:var(--warning);font-weight:700;}
-
-  footer{
-    font-size:11.5px;color:var(--sub);padding:14px 4px 4px;border-top:1px solid var(--line);
-    display:flex;flex-wrap:wrap;gap:6px 18px;justify-content:space-between;
-  }
-
-  @media (max-width:860px){
-    .grid{grid-template-columns:1fr;}
-    .kpis{grid-template-columns:repeat(2,1fr);}
-    header{flex-direction:column;}
-    .meta{align-items:flex-start;text-align:left;}
-  }
-  @media (max-width:480px){
-    .kpis{grid-template-columns:1fr 1fr;}
-  }
+  .cont3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px}
+  .cont3 .card .val{font-size:1.8rem}
+  .cont3 .lib .val{color:var(--ok)} .cont3 .pen .val{color:var(--ink)} .cont3 .ven .val{color:var(--warn)}
+  tr.r-lib td{background:var(--ok-bg)} tr.r-ven td{background:var(--warn-bg)} tr.r-res td{background:transparent}
+  tr.r-lib .est{color:var(--ok);font-weight:600} tr.r-ven .est{color:var(--warn);font-weight:600} tr.r-res .est{color:var(--mut);font-weight:600}
+  td.wrap{white-space:normal;min-width:220px}
+  .visor{display:grid;grid-template-columns:1fr 280px;gap:12px}
+  .filtros{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+  .filtros label{color:var(--mut);font-size:.85rem}
+  select{font:inherit;padding:5px 8px;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+  .chip{font:inherit;font-size:.82rem;padding:4px 10px;border-radius:99px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+  .chip i{width:11px;height:11px;border-radius:3px;display:inline-block}
+  .chip[aria-pressed="false"]{opacity:.45}
+  #cv{width:100%;height:420px;display:block;border:1px solid var(--line);border-radius:8px;background:var(--bg);cursor:pointer}
+  .panel{border:1px solid var(--line);border-radius:8px;padding:12px;font-size:.88rem;align-self:start}
+  .panel dt{color:var(--mut);font-size:.75rem;text-transform:uppercase;letter-spacing:.03em;margin-top:8px}
+  .panel dd{margin:0;word-break:break-all}
+  .panel .vacio{color:var(--mut)}
+  .hint{color:var(--mut);font-size:.8rem;margin-top:6px}
+  @media (max-width:760px){.cont3{grid-template-columns:1fr}.visor{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-
 <div class="wrap">
+  <h1 id="obra"></h1>
+  <p class="sub" id="meta"></p>
 
-  <header>
-    <div class="titleblock">
-      <span class="eyebrow">Tablero de obra · Informe semanal N.º 13</span>
-      <h1>Mejoramiento del Centro de Salud San Marcos — Nivel I-3</h1>
-      <span class="subline">San Marcos, San Román, Puno · Contrato N.º 018-2026-MDSM · Consorcio Altiplano Sur</span>
-    </div>
-    <div class="meta">
-      <span>Corte <strong class="mono">04/08/2026</strong> (anterior 28/07/2026)</span>
-      <span>Día de plazo <strong class="mono">92 / 180</strong></span>
-      <span>Fin contractual <strong class="mono">01/11/2026</strong></span>
-    </div>
-  </header>
+  <div class="grid3" id="tarjetas"></div>
 
-  <div class="semaforo">
-    <span class="dot"></span>
-    <span>CRÍTICO</span>
-    <span class="semaforo-msg">— «Concreto en columnas» va 29,3 pp por debajo de lo programado y está en la ruta crítica. La ruta crítica completa acumula 9,9 pp.</span>
+  <div class="card sem" id="semaforo"></div>
+
+  <div class="card">
+    <h2>Avance por partida</h2>
+    <div class="tablewrap"><table id="tabla"></table></div>
+    <div class="leyenda" id="leyenda"></div>
   </div>
 
-  <div class="kpis">
-    <div class="kpi">
-      <span class="label">Programado</span>
-      <span class="value num">42,8<small>%</small></span>
-      <span class="foot">al 04/08/2026</span>
+  <div class="charts">
+    <div class="card">
+      <h2>Curva S · programado y ejecutado</h2>
+      <div id="curva"></div>
+      <div class="lg" id="lgCurva"></div>
     </div>
-    <div class="kpi">
-      <span class="label">Ejecutado</span>
-      <span class="value num">43,5<small>%</small></span>
-      <span class="foot">valorizado S/ 575 074,54</span>
-    </div>
-    <div class="kpi flag-warning">
-      <span class="label">Atraso sin compensar</span>
-      <span class="value num">4,2<small>pp</small></span>
-      <span class="foot">suma ponderada, sin netear adelantos</span>
-    </div>
-    <div class="kpi flag-critical">
-      <span class="label">Atraso ruta crítica</span>
-      <span class="value num">9,9<small>pp</small></span>
-      <span class="foot">umbral ámbar 10 pp · rojo 20 pp</span>
-    </div>
-    <div class="kpi">
-      <span class="label">Adelanto / anticipado</span>
-      <span class="value num">3,2<small>pp</small></span>
-      <span class="foot">aparte · + 1,8 pp de trabajo anticipado</span>
+    <div class="card">
+      <h2>PPC · últimas ocho semanas</h2>
+      <div id="ppc"></div>
+      <div class="lg" id="lgPpc"></div>
     </div>
   </div>
 
-  <div class="grid">
-    <!-- Partidas -->
-    <section class="panel">
-      <div class="table-tools">
-        <h2>Partidas de control</h2>
-        <input class="search" id="search" type="text" placeholder="Buscar partida…" />
-      </div>
-      <div class="legend">
-        <span><i style="background:var(--sub);opacity:.55"></i>Programado</span>
-        <span><i style="background:var(--accent)"></i>Ejecutado</span>
-        <span class="rc-badge" style="padding:1px 4px">RC</span>
-        <span>= ruta crítica</span>
-      </div>
-      <div class="table-scroll">
-        <table id="tabla-partidas">
-          <thead>
-            <tr>
-              <th data-key="item">Ítem <span class="arrow">↕</span></th>
-              <th data-key="partida">Partida <span class="arrow">↕</span></th>
-              <th data-key="peso_pct">Peso <span class="arrow">↕</span></th>
-              <th data-key="avance">Avance <span class="arrow">↕</span></th>
-              <th data-key="brecha_pp">Brecha <span class="arrow">↕</span></th>
-              <th data-key="estado">Estado <span class="arrow">↕</span></th>
-            </tr>
-          </thead>
-          <tbody id="tbody-partidas"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- Sidebar -->
-    <aside class="side">
-
-      <section class="panel">
-        <h2>PPC · cumplimiento de compromisos</h2>
-        <div class="panel-sub">Semana 13 frente al promedio de las últimas 8 semanas</div>
-        <div class="ppc-compare">
-          <div class="ppc-bar-wrap">
-            <div class="ppc-bar-track"><div class="ppc-bar-fill last" style="height:57.9%"></div></div>
-            <span class="ppc-bar-value">57,9 %</span>
-            <span class="ppc-bar-label">Semana 13</span>
-          </div>
-          <div class="ppc-bar-wrap">
-            <div class="ppc-bar-track"><div class="ppc-bar-fill avg" style="height:69.8%"></div></div>
-            <span class="ppc-bar-value">69,8 %</span>
-            <span class="ppc-bar-label">Promedio 8 sem.</span>
-          </div>
-        </div>
-      </section>
-
-      <section class="panel">
-        <h2>Restricciones · vencen en 7 días o menos</h2>
-        <div class="panel-sub">9 de 12 restricciones siguen pendientes</div>
-        <div class="list" id="list-restricciones"></div>
-      </section>
-
-      <section class="panel">
-        <h2>Modelo BIM fuera de tolerancia</h2>
-        <div class="bim-flag">
-          <span>Concreto en vigas y losas</span>
-          <span class="num mono">−4,86 %</span>
-        </div>
-        <div class="panel-sub" style="margin-top:-4px">Tolerancia acordada ±3 %</div>
-      </section>
-
-      <section class="panel">
-        <h2>Incompatibilidades abiertas</h2>
-        <div class="list" id="list-incompatibilidades"></div>
-      </section>
-
-    </aside>
+  <div class="card" style="margin-top:14px">
+    <h2>Restricciones del lookahead</h2>
+    <div class="cont3" id="contR"></div>
+    <div class="tablewrap"><table id="tablaR"></table></div>
+    <div class="leyenda" id="leyR"></div>
   </div>
 
-  <footer>
-    <span>Fuente: San-Marcos-datos-de-obra.xlsx (corte 04/08/2026) · calculado con la skill metricas-de-obra, sin cifras a mano.</span>
-    <span>Periodo del informe: 29/07/2026 – 04/08/2026 · Supervisión: Ing. Rosa Mamani Quispe · Residente: Ing. Carlos Huanca Tito</span>
-  </footer>
-
+  <div class="card" style="margin-top:14px">
+    <h2>Visor del modelo por estado</h2>
+    <div class="filtros">
+      <label for="fNivel">Nivel</label>
+      <select id="fNivel"></select>
+      <span id="chips" style="display:flex;gap:6px;flex-wrap:wrap"></span>
+    </div>
+    <div class="visor">
+      <canvas id="cv" aria-label="Vista isométrica del modelo, coloreada por estado"></canvas>
+      <div class="panel" id="panel"><span class="vacio">Haz clic en un elemento del modelo para ver su detalle.</span></div>
+    </div>
+    <div class="hint">Vista isométrica ilustrativa, no es un metrado. Los filtros atenúan los elementos que no coinciden.</div>
+  </div>
 </div>
 
 <script>
-(function(){
-  var partidas = [
-    {item:"01.01",partida:"Obras provisionales",rc:false,peso_pct:3.7,programado_pct:100.0,ejecutado_pct:100.0,brecha_pp:0.0,estado:"En plazo"},
-    {item:"02.01",partida:"Movimiento de tierras",rc:false,peso_pct:14.2,programado_pct:100.0,ejecutado_pct:96.0,brecha_pp:4.0,estado:"En plazo"},
-    {item:"03.01",partida:"Concreto en zapatas",rc:true,peso_pct:12.1,programado_pct:100.0,ejecutado_pct:88.0,brecha_pp:12.0,estado:"En riesgo"},
-    {item:"03.02",partida:"Concreto en columnas",rc:true,peso_pct:7.6,programado_pct:90.2,ejecutado_pct:61.0,brecha_pp:29.3,estado:"Crítico"},
-    {item:"03.03",partida:"Concreto en vigas y losas",rc:true,peso_pct:17.3,programado_pct:27.8,ejecutado_pct:30.0,brecha_pp:-2.2,estado:"Adelantada"},
-    {item:"04.01",partida:"Albañilería",rc:false,peso_pct:14.8,programado_pct:0.0,ejecutado_pct:12.0,brecha_pp:null,estado:"Aún no entra en ventana"},
-    {item:"05.01",partida:"Instalaciones sanitarias",rc:false,peso_pct:14.1,programado_pct:4.0,ejecutado_pct:18.0,brecha_pp:-14.0,estado:"Adelantada"},
-    {item:"06.01",partida:"Instalaciones eléctricas",rc:false,peso_pct:16.3,programado_pct:3.8,ejecutado_pct:9.0,brecha_pp:-5.2,estado:"Adelantada"}
-  ];
+/* Datos de obra · Centro de Salud San Marcos · corte 04/08/2026. Obra de ejercicio: todo es ficticio.
+   Salen del Excel «San-Marcos-datos-de-obra.xlsx». Las fechas van como dd/mm/aaaa. */
+var DATOS = {
+ "obra": {
+  "nombre": "Mejoramiento del Centro de Salud San Marcos, Nivel I-3",
+  "ubicacion": "Distrito de San Marcos, provincia de San Román, región Puno",
+  "entidad": "Municipalidad Distrital de San Marcos",
+  "contrato": "N.º 018-2026-MDSM · Suma alzada",
+  "contratista": "Consorcio Altiplano Sur",
+  "residente": "Ing. Carlos Huanca Tito (CIP 132904)",
+  "inicio": "05/05/2026",
+  "fin": "01/11/2026",
+  "corte": "04/08/2026",
+  "corteAnterior": "28/07/2026",
+  "plazo": 180,
+  "dia": 92,
+  "informe": 13,
+  "periodo": "del 29/07/2026 al 04/08/2026",
+  "monto": 1321656.6,
+  "umbralAmbar": 10,
+  "umbralRojo": 20,
+  "tolBim": 3
+ },
+ "partidas": [
+  {
+   "item": "01.01",
+   "nombre": "Obras provisionales",
+   "und": "glb",
+   "met": 1,
+   "ej0": 1,
+   "ej1": 1,
+   "sem": 0,
+   "pu": 48500,
+   "parcial": 48500,
+   "valAcum": 48500,
+   "valSem": 0,
+   "ini": "05/05/2026",
+   "fin": "20/05/2026",
+   "resp": "Residencia",
+   "critica": false,
+   "causa": "ninguna"
+  },
+  {
+   "item": "02.01",
+   "nombre": "Movimiento de tierras",
+   "und": "m3",
+   "met": 4820,
+   "ej0": 4588,
+   "ej1": 4627,
+   "sem": 39,
+   "pu": 38.9,
+   "parcial": 187498,
+   "valAcum": 179990.3,
+   "valSem": 1517.1,
+   "ini": "18/05/2026",
+   "fin": "12/06/2026",
+   "resp": "Producción",
+   "critica": false,
+   "causa": "lluvias en la primera quincena"
+  },
+  {
+   "item": "03.01",
+   "nombre": "Concreto en zapatas",
+   "und": "m3",
+   "met": 386.5,
+   "ej0": 318.4,
+   "ej1": 340.1,
+   "sem": 21.7,
+   "pu": 412.6,
+   "parcial": 159469.9,
+   "valAcum": 140325.26,
+   "valSem": 8953.42,
+   "ini": "08/06/2026",
+   "fin": "04/07/2026",
+   "resp": "Producción",
+   "critica": true,
+   "causa": "demora del segundo lote de acero"
+  },
+  {
+   "item": "03.02",
+   "nombre": "Concreto en columnas",
+   "und": "m3",
+   "met": 214.8,
+   "ej0": 104.6,
+   "ej1": 131,
+   "sem": 26.4,
+   "pu": 468.2,
+   "parcial": 100569.36,
+   "valAcum": 61334.2,
+   "valSem": 12360.48,
+   "ini": "28/06/2026",
+   "fin": "08/08/2026",
+   "resp": "Producción",
+   "critica": true,
+   "causa": "rendimiento de encofrado bajo lo previsto"
+  },
+  {
+   "item": "03.03",
+   "nombre": "Concreto en vigas y losas",
+   "und": "m3",
+   "met": 512.3,
+   "ej0": 118.9,
+   "ej1": 153.7,
+   "sem": 34.8,
+   "pu": 445.8,
+   "parcial": 228383.34,
+   "valAcum": 68519.46,
+   "valSem": 15513.84,
+   "ini": "20/07/2026",
+   "fin": "12/09/2026",
+   "resp": "Producción",
+   "critica": true,
+   "causa": "depende del avance de columnas"
+  },
+  {
+   "item": "04.01",
+   "nombre": "Albañilería",
+   "und": "m2",
+   "met": 3140,
+   "ej0": 301.2,
+   "ej1": 376.8,
+   "sem": 75.6,
+   "pu": 62.4,
+   "parcial": 195936,
+   "valAcum": 23512.32,
+   "valSem": 4717.44,
+   "ini": "10/08/2026",
+   "fin": "30/09/2026",
+   "resp": "Producción",
+   "critica": false,
+   "causa": "cuadrilla adelantada, la partida aún no entra en ventana"
+  },
+  {
+   "item": "05.01",
+   "nombre": "Instalaciones sanitarias",
+   "und": "glb",
+   "met": 1,
+   "ej0": 0.12,
+   "ej1": 0.18,
+   "sem": 0.06,
+   "pu": 186400,
+   "parcial": 186400,
+   "valAcum": 33552,
+   "valSem": 11184,
+   "ini": "01/08/2026",
+   "fin": "15/10/2026",
+   "resp": "Subcontrata",
+   "critica": false,
+   "causa": "subcontratista con dos frentes en paralelo"
+  },
+  {
+   "item": "06.01",
+   "nombre": "Instalaciones eléctricas",
+   "und": "glb",
+   "met": 1,
+   "ej0": 0.07,
+   "ej1": 0.09,
+   "sem": 0.02,
+   "pu": 214900,
+   "parcial": 214900,
+   "valAcum": 19341,
+   "valSem": 4298,
+   "ini": "01/08/2026",
+   "fin": "20/10/2026",
+   "resp": "Subcontrata",
+   "critica": false,
+   "causa": "falta aprobación de planos de detalle"
+  }
+ ],
+ "curvaS": [
+  {
+   "sem": 1,
+   "corte": "12/05/2026",
+   "progT": 1.71,
+   "ejecT": 1.65,
+   "progC": 0,
+   "ejecC": 0
+  },
+  {
+   "sem": 2,
+   "corte": "19/05/2026",
+   "progT": 3.99,
+   "ejecT": 3.3,
+   "progC": 0,
+   "ejecC": 0
+  },
+  {
+   "sem": 3,
+   "corte": "26/05/2026",
+   "progT": 8.21,
+   "ejecT": 4.8,
+   "progC": 0,
+   "ejecC": 0
+  },
+  {
+   "sem": 4,
+   "corte": "02/06/2026",
+   "progT": 12.18,
+   "ejecT": 6.79,
+   "progC": 0,
+   "ejecC": 0
+  },
+  {
+   "sem": 5,
+   "corte": "09/06/2026",
+   "progT": 16.62,
+   "ejecT": 10.48,
+   "progC": 1.26,
+   "ejecC": 0
+  },
+  {
+   "sem": 6,
+   "corte": "16/06/2026",
+   "progT": 21.57,
+   "ejecT": 15.09,
+   "progC": 10.05,
+   "ejecC": 3.26
+  },
+  {
+   "sem": 7,
+   "corte": "23/06/2026",
+   "progT": 24.82,
+   "ejecT": 19.29,
+   "progC": 18.84,
+   "ejecC": 8.49
+  },
+  {
+   "sem": 8,
+   "corte": "30/06/2026",
+   "progT": 28.44,
+   "ejecT": 21.93,
+   "progC": 28.63,
+   "ejecC": 13.71
+  },
+  {
+   "sem": 9,
+   "corte": "07/07/2026",
+   "progT": 31.59,
+   "ejecT": 24.53,
+   "progC": 37.17,
+   "ejecC": 20.17
+  },
+  {
+   "sem": 10,
+   "corte": "14/07/2026",
+   "progT": 32.89,
+   "ejecT": 26.78,
+   "progC": 40.69,
+   "ejecC": 25.7
+  },
+  {
+   "sem": 11,
+   "corte": "21/07/2026",
+   "progT": 34.51,
+   "ejecT": 31.34,
+   "progC": 45.07,
+   "ejecC": 34.47
+  },
+  {
+   "sem": 12,
+   "corte": "28/07/2026",
+   "progT": 38.05,
+   "ejecT": 39.08,
+   "progC": 54.64,
+   "ejecC": 47.78
+  },
+  {
+   "sem": 13,
+   "corte": "04/08/2026",
+   "progT": 42.76,
+   "ejecT": 43.51,
+   "progC": 64.22,
+   "ejecC": 55.32
+  },
+  {
+   "sem": 14,
+   "corte": "11/08/2026",
+   "progT": 48.78,
+   "ejecT": null,
+   "progC": 72.29,
+   "ejecC": null
+  },
+  {
+   "sem": 15,
+   "corte": "18/08/2026",
+   "progT": 55.79,
+   "ejecT": null,
+   "progC": 78.35,
+   "ejecC": null
+  },
+  {
+   "sem": 16,
+   "corte": "25/08/2026",
+   "progT": 62.8,
+   "ejecT": null,
+   "progC": 84.41,
+   "ejecC": null
+  },
+  {
+   "sem": 17,
+   "corte": "01/09/2026",
+   "progT": 69.82,
+   "ejecT": null,
+   "progC": 90.47,
+   "ejecC": null
+  },
+  {
+   "sem": 18,
+   "corte": "08/09/2026",
+   "progT": 76.83,
+   "ejecT": null,
+   "progC": 96.54,
+   "ejecC": null
+  },
+  {
+   "sem": 19,
+   "corte": "15/09/2026",
+   "progT": 82.88,
+   "ejecT": null,
+   "progC": 100,
+   "ejecC": null
+  },
+  {
+   "sem": 20,
+   "corte": "22/09/2026",
+   "progT": 87.66,
+   "ejecT": null,
+   "progC": 100,
+   "ejecC": null
+  },
+  {
+   "sem": 21,
+   "corte": "29/09/2026",
+   "progT": 92.43,
+   "ejecT": null,
+   "progC": 100,
+   "ejecC": null
+  },
+  {
+   "sem": 22,
+   "corte": "06/10/2026",
+   "progT": 95.46,
+   "ejecT": null,
+   "progC": 100,
+   "ejecC": null
+  },
+  {
+   "sem": 23,
+   "corte": "13/10/2026",
+   "progT": 98.2,
+   "ejecT": null,
+   "progC": 100,
+   "ejecC": null
+  },
+  {
+   "sem": 24,
+   "corte": "20/10/2026",
+   "progT": 100,
+   "ejecT": null,
+   "progC": 100,
+   "ejecC": null
+  },
+  {
+   "sem": 25,
+   "corte": "27/10/2026",
+   "progT": 100,
+   "ejecT": null,
+   "progC": 100,
+   "ejecC": null
+  },
+  {
+   "sem": 26,
+   "corte": "03/11/2026",
+   "progT": 100,
+   "ejecT": null,
+   "progC": 100,
+   "ejecC": null
+  }
+ ],
+ "ppc": [
+  {
+   "sem": 6,
+   "corte": "16/06/2026",
+   "comp": 22,
+   "cump": 18,
+   "ppc": 81.8
+  },
+  {
+   "sem": 7,
+   "corte": "23/06/2026",
+   "comp": 21,
+   "cump": 17,
+   "ppc": 81
+  },
+  {
+   "sem": 8,
+   "corte": "30/06/2026",
+   "comp": 22,
+   "cump": 16,
+   "ppc": 72.7
+  },
+  {
+   "sem": 9,
+   "corte": "07/07/2026",
+   "comp": 21,
+   "cump": 15,
+   "ppc": 71.4
+  },
+  {
+   "sem": 10,
+   "corte": "14/07/2026",
+   "comp": 21,
+   "cump": 14,
+   "ppc": 66.7
+  },
+  {
+   "sem": 11,
+   "corte": "21/07/2026",
+   "comp": 23,
+   "cump": 15,
+   "ppc": 65.2
+  },
+  {
+   "sem": 12,
+   "corte": "28/07/2026",
+   "comp": 21,
+   "cump": 13,
+   "ppc": 61.9
+  },
+  {
+   "sem": 13,
+   "corte": "04/08/2026",
+   "comp": 19,
+   "cump": 11,
+   "ppc": 57.9
+  }
+ ],
+ "plan": [
+  {
+   "id": "T-01",
+   "tarea": "Vaciado de columnas eje C, primer nivel (14,2 m³)",
+   "partida": "Concreto en columnas",
+   "resp": "Producción",
+   "cumplida": true,
+   "causa": "",
+   "cat": ""
+  },
+  {
+   "id": "T-02",
+   "tarea": "Vaciado de columnas eje B, segundo nivel (12,2 m³)",
+   "partida": "Concreto en columnas",
+   "resp": "Producción",
+   "cumplida": true,
+   "causa": "",
+   "cat": ""
+  },
+  {
+   "id": "T-03",
+   "tarea": "Vaciado de columnas eje D, segundo nivel",
+   "partida": "Concreto en columnas",
+   "resp": "Producción",
+   "cumplida": false,
+   "causa": "El lote 2 de acero llegó incompleto: faltan 3,2 t de Ø5/8\"",
+   "cat": "Materiales"
+  },
+  {
+   "id": "T-04",
+   "tarea": "Encofrado de vigas eje 3, segundo nivel",
+   "partida": "Concreto en vigas y losas",
+   "resp": "Producción",
+   "cumplida": false,
+   "causa": "Faltan 120 m² de paneles de encofrado metálico",
+   "cat": "Equipos"
+  },
+  {
+   "id": "T-05",
+   "tarea": "Armado de acero de losa segundo nivel, bloque A",
+   "partida": "Concreto en vigas y losas",
+   "resp": "Producción",
+   "cumplida": false,
+   "causa": "RFI-011 sin respuesta: interferencia de montante con viga V-203",
+   "cat": "Ingeniería"
+  },
+  {
+   "id": "T-06",
+   "tarea": "Vaciado de losa primer nivel, bloque A (34,8 m³)",
+   "partida": "Concreto en vigas y losas",
+   "resp": "Producción",
+   "cumplida": true,
+   "causa": "",
+   "cat": ""
+  },
+  {
+   "id": "T-07",
+   "tarea": "Encofrado de losa primer nivel, bloque A",
+   "partida": "Concreto en vigas y losas",
+   "resp": "Producción",
+   "cumplida": true,
+   "causa": "",
+   "cat": ""
+  },
+  {
+   "id": "T-08",
+   "tarea": "Vaciado de zapatas eje F (21,7 m³)",
+   "partida": "Concreto en zapatas",
+   "resp": "Producción",
+   "cumplida": true,
+   "causa": "",
+   "cat": ""
+  },
+  {
+   "id": "T-09",
+   "tarea": "Vaciado de zapatas eje E",
+   "partida": "Concreto en zapatas",
+   "resp": "Producción",
+   "cumplida": false,
+   "causa": "El mixer llegó con slump de 5,5\" y se rechazó; no hubo reposición ese día",
+   "cat": "Calidad"
+  },
+  {
+   "id": "T-10",
+   "tarea": "Relleno compactado en patio de maniobras (39 m³)",
+   "partida": "Movimiento de tierras",
+   "resp": "Producción",
+   "cumplida": true,
+   "causa": "",
+   "cat": ""
+  },
+  {
+   "id": "T-11",
+   "tarea": "Relleno compactado, segundo tramo",
+   "partida": "Movimiento de tierras",
+   "resp": "Producción",
+   "cumplida": false,
+   "causa": "Rodillo compactador en mantenimiento correctivo",
+   "cat": "Equipos"
+  },
+  {
+   "id": "T-12",
+   "tarea": "Asentado de muros, bloque de servicios (37,6 m²)",
+   "partida": "Albañilería",
+   "resp": "Producción",
+   "cumplida": true,
+   "causa": "",
+   "cat": ""
+  },
+  {
+   "id": "T-13",
+   "tarea": "Asentado de muros, eje 1 bloque A (38,0 m²)",
+   "partida": "Albañilería",
+   "resp": "Producción",
+   "cumplida": true,
+   "causa": "",
+   "cat": ""
+  },
+  {
+   "id": "T-14",
+   "tarea": "Tendido de tubería eléctrica en losa, bloque A",
+   "partida": "Instalaciones eléctricas",
+   "resp": "Subcontrata",
+   "cumplida": true,
+   "causa": "",
+   "cat": ""
+  },
+  {
+   "id": "T-15",
+   "tarea": "Tendido de tubería eléctrica en losa, bloque B",
+   "partida": "Instalaciones eléctricas",
+   "resp": "Subcontrata",
+   "cumplida": false,
+   "causa": "Planos de detalle IIE-PL-201 sin aprobar",
+   "cat": "Ingeniería"
+  },
+  {
+   "id": "T-16",
+   "tarea": "Tubería sanitaria empotrada en losa, bloque A",
+   "partida": "Instalaciones sanitarias",
+   "resp": "Subcontrata",
+   "cumplida": true,
+   "causa": "",
+   "cat": ""
+  },
+  {
+   "id": "T-17",
+   "tarea": "Montantes sanitarias bloque A",
+   "partida": "Instalaciones sanitarias",
+   "resp": "Subcontrata",
+   "cumplida": false,
+   "causa": "La subcontrata trasladó la cuadrilla al frente de agua fría",
+   "cat": "Subcontrata"
+  },
+  {
+   "id": "T-18",
+   "tarea": "Protocolo de liberación de columnas eje C",
+   "partida": "Concreto en columnas",
+   "resp": "Calidad",
+   "cumplida": false,
+   "causa": "La Supervisión no asistió a la liberación programada",
+   "cat": "Supervisión"
+  },
+  {
+   "id": "T-19",
+   "tarea": "Charla de seguridad para trabajo en altura",
+   "partida": "Seguridad",
+   "resp": "SSOMA",
+   "cumplida": true,
+   "causa": "",
+   "cat": ""
+  }
+ ],
+ "restricciones": [
+  {
+   "id": "R-01",
+   "desc": "Aprobación de los planos de detalle IIE-PL-201",
+   "tipo": "Ingeniería",
+   "partida": "Instalaciones eléctricas",
+   "tarea": "Tendido de tubería en losa, bloque B",
+   "resp": "Supervisión",
+   "req": "07/08/2026",
+   "lib": "",
+   "estado": "Pendiente",
+   "dias": 3
+  },
+  {
+   "id": "R-02",
+   "desc": "Llegada y certificación del acero, lote 3 (SUB-007)",
+   "tipo": "Materiales",
+   "partida": "Concreto en columnas",
+   "tarea": "Columnas segundo nivel, ejes D-F",
+   "resp": "Logística",
+   "req": "10/08/2026",
+   "lib": "",
+   "estado": "Pendiente",
+   "dias": 6
+  },
+  {
+   "id": "R-03",
+   "desc": "Alquiler de 120 m² adicionales de encofrado metálico",
+   "tipo": "Equipos",
+   "partida": "Concreto en vigas y losas",
+   "tarea": "Encofrado de vigas eje 3",
+   "resp": "Producción",
+   "req": "11/08/2026",
+   "lib": "03/08/2026",
+   "estado": "Liberada",
+   "dias": 7
+  },
+  {
+   "id": "R-04",
+   "desc": "Respuesta del RFI-011: interferencia con la viga V-203",
+   "tipo": "Ingeniería",
+   "partida": "Concreto en vigas y losas",
+   "tarea": "Armado de losa segundo nivel, bloque A",
+   "resp": "Proyectista",
+   "req": "06/08/2026",
+   "lib": "",
+   "estado": "Pendiente",
+   "dias": 2
+  },
+  {
+   "id": "R-05",
+   "desc": "Aprobación de la muestra de ladrillo (SUB-004)",
+   "tipo": "Calidad",
+   "partida": "Albañilería",
+   "tarea": "Muros bloque B",
+   "resp": "Supervisión",
+   "req": "10/08/2026",
+   "lib": "",
+   "estado": "Pendiente",
+   "dias": 6
+  },
+  {
+   "id": "R-06",
+   "desc": "Bomba de concreto para la losa del segundo nivel",
+   "tipo": "Equipos",
+   "partida": "Concreto en vigas y losas",
+   "tarea": "Vaciado de losa segundo nivel",
+   "resp": "Producción",
+   "req": "14/08/2026",
+   "lib": "",
+   "estado": "Pendiente",
+   "dias": 10
+  },
+  {
+   "id": "R-07",
+   "desc": "Respuesta a la consulta CAR-031 sobre los acuerdos del Acta 07",
+   "tipo": "Contractual",
+   "partida": "Concreto en vigas y losas",
+   "tarea": "Vaciado de la losa del tanque elevado",
+   "resp": "Supervisión",
+   "req": "07/08/2026",
+   "lib": "",
+   "estado": "Pendiente",
+   "dias": 3
+  },
+  {
+   "id": "R-08",
+   "desc": "Cuadrilla adicional de cuatro fierreros",
+   "tipo": "Mano de obra",
+   "partida": "Concreto en columnas",
+   "tarea": "Habilitación de acero, segundo nivel",
+   "resp": "Residencia",
+   "req": "10/08/2026",
+   "lib": "01/08/2026",
+   "estado": "Liberada",
+   "dias": 6
+  },
+  {
+   "id": "R-09",
+   "desc": "Permiso y capacitación de trabajo en altura",
+   "tipo": "Seguridad",
+   "partida": "Concreto en vigas y losas",
+   "tarea": "Encofrado de losa segundo nivel",
+   "resp": "SSOMA",
+   "req": "10/08/2026",
+   "lib": "04/08/2026",
+   "estado": "Liberada",
+   "dias": 6
+  },
+  {
+   "id": "R-10",
+   "desc": "Firma del protocolo de liberación de columnas eje C (PRT-022)",
+   "tipo": "Calidad",
+   "partida": "Concreto en columnas",
+   "tarea": "Desencofrado y continuidad del eje C",
+   "resp": "Supervisión",
+   "req": "05/08/2026",
+   "lib": "",
+   "estado": "Pendiente",
+   "dias": 1
+  },
+  {
+   "id": "R-11",
+   "desc": "Aprobación del cambio de ubicación del grupo electrógeno",
+   "tipo": "Contractual",
+   "partida": "Instalaciones eléctricas",
+   "tarea": "Canalización a casa de fuerza",
+   "resp": "Entidad",
+   "req": "21/08/2026",
+   "lib": "",
+   "estado": "Pendiente",
+   "dias": 17
+  },
+  {
+   "id": "R-12",
+   "desc": "Llegada de tubería PVC Ø4\" para montantes",
+   "tipo": "Materiales",
+   "partida": "Instalaciones sanitarias",
+   "tarea": "Montantes bloque A",
+   "resp": "Subcontrata",
+   "req": "12/08/2026",
+   "lib": "",
+   "estado": "Pendiente",
+   "dias": 8
+  }
+ ],
+ "bim": [
+  {
+   "partida": "Movimiento de tierras",
+   "und": "m3",
+   "exp": 4820,
+   "mod": null,
+   "dif": null,
+   "difPct": null,
+   "tol": "±3 %",
+   "estado": "No comparable",
+   "nota": "El terreno no está modelado"
+  },
+  {
+   "partida": "Concreto en zapatas",
+   "und": "m3",
+   "exp": 386.5,
+   "mod": 381.9,
+   "dif": -4.6,
+   "difPct": -1.19,
+   "tol": "±3 %",
+   "estado": "Dentro de tolerancia",
+   "nota": ""
+  },
+  {
+   "partida": "Concreto en columnas",
+   "und": "m3",
+   "exp": 214.8,
+   "mod": 219.6,
+   "dif": 4.8,
+   "difPct": 2.23,
+   "tol": "±3 %",
+   "estado": "Dentro de tolerancia",
+   "nota": ""
+  },
+  {
+   "partida": "Concreto en vigas y losas",
+   "und": "m3",
+   "exp": 512.3,
+   "mod": 487.4,
+   "dif": -24.9,
+   "difPct": -4.86,
+   "tol": "±3 %",
+   "estado": "Fuera de tolerancia",
+   "nota": "Diferencia sin causa confirmada"
+  },
+  {
+   "partida": "Albañilería",
+   "und": "m2",
+   "exp": 3140,
+   "mod": 3212,
+   "dif": 72,
+   "difPct": 2.29,
+   "tol": "±3 %",
+   "estado": "Dentro de tolerancia",
+   "nota": ""
+  },
+  {
+   "partida": "Instalaciones sanitarias",
+   "und": "glb",
+   "exp": null,
+   "mod": null,
+   "dif": null,
+   "difPct": null,
+   "tol": "±3 %",
+   "estado": "No comparable",
+   "nota": "Partida global: no comparable por metrado"
+  },
+  {
+   "partida": "Instalaciones eléctricas",
+   "und": "glb",
+   "exp": null,
+   "mod": null,
+   "dif": null,
+   "difPct": null,
+   "tol": "±3 %",
+   "estado": "No comparable",
+   "nota": "Partida global: no comparable por metrado"
+  }
+ ],
+ "incomp": [
+  {
+   "id": "INC-01",
+   "desc": "Montante sanitaria Ø4\" atraviesa la viga V-203",
+   "disc": "Sanitarias / Estructuras",
+   "ubic": "Eje C-4, segundo nivel",
+   "sev": "Alta",
+   "estado": "Abierta",
+   "doc": "CSSM-CAS-EST-RFI-011"
+  },
+  {
+   "id": "INC-02",
+   "desc": "Bandeja eléctrica cruza el ducto de extracción del pasillo",
+   "disc": "Eléctricas / Mecánicas",
+   "ubic": "Pasillo segundo nivel, ejes 2-3",
+   "sev": "Media",
+   "estado": "Abierta",
+   "doc": "Sin documento emitido"
+  },
+  {
+   "id": "INC-03",
+   "desc": "Nivel de fondo de zapata Z-7 distinto entre estructuras y arquitectura",
+   "disc": "Estructuras / Arquitectura",
+   "ubic": "Eje F-1",
+   "sev": "Alta",
+   "estado": "Cerrada",
+   "doc": "CSSM-CAS-EST-RFI-006"
+  },
+  {
+   "id": "INC-04",
+   "desc": "Puerta P-12 choca con la columna C-9",
+   "disc": "Arquitectura / Estructuras",
+   "ubic": "Eje B-5, primer nivel",
+   "sev": "Media",
+   "estado": "Cerrada",
+   "doc": "CSSM-CAS-ARQ-RFI-008"
+  },
+  {
+   "id": "INC-05",
+   "desc": "Tramo de desagüe sin la pendiente mínima",
+   "disc": "Sanitarias",
+   "ubic": "Bloque B, primer nivel",
+   "sev": "Baja",
+   "estado": "Abierta",
+   "doc": "En revisión del proyectista"
+  }
+ ],
+ "metas": [
+  {
+   "nivel": "Objetivo del cliente",
+   "meta": "Centro de salud operativo antes de la campaña de invierno 2027",
+   "calculo": "-",
+   "hoja": "Acta de inicio"
+  },
+  {
+   "nivel": "Objetivo del proyecto",
+   "meta": "Cerrar estructuras antes del 12/09/2026",
+   "calculo": "-",
+   "hoja": "Cronograma"
+  },
+  {
+   "nivel": "PPC semanal",
+   "meta": "80 %",
+   "calculo": "Tareas cumplidas / tareas comprometidas",
+   "hoja": "Last Planner"
+  },
+  {
+   "nivel": "Restricciones liberadas con una semana de anticipación",
+   "meta": "90 %",
+   "calculo": "Liberadas / total del lookahead",
+   "hoja": "Restricciones"
+  },
+  {
+   "nivel": "Tiempo de respuesta de RFI",
+   "meta": "7 días calendario",
+   "calculo": "Promedio de días entre emisión y respuesta",
+   "hoja": "Registro documentario"
+  },
+  {
+   "nivel": "Incompatibilidades resueltas antes de ejecutar",
+   "meta": "100 %",
+   "calculo": "Cerradas / total detectadas",
+   "hoja": "BIM"
+  },
+  {
+   "nivel": "Diferencia de metrado modelo contra expediente",
+   "meta": "±3 %",
+   "calculo": "(Modelo − expediente) / expediente",
+   "hoja": "BIM"
+  }
+ ],
+ "parte": [
+  {
+   "fecha": "29/07/2026",
+   "dia": "Miércoles",
+   "clima": "Despejado, 4 °C a las 6:00",
+   "personal": 58,
+   "act": "Vaciado de columnas eje C, primer nivel: 14,2 m³. Habilitación de acero para vigas del eje 3.",
+   "notas": "El mixer 3 llegó con slump de 5,5\" y se rechazó; el vaciado de zapatas del eje E quedó suspendido. La Supervisión no asistió a la liberación de columnas del eje C; se vació con el visto bueno del Residente, según el acuerdo 3.6 del Acta 07."
+  },
+  {
+   "fecha": "30/07/2026",
+   "dia": "Jueves",
+   "clima": "Nublado",
+   "personal": 61,
+   "act": "Encofrado de losa del primer nivel, bloque A. Tubería sanitaria y eléctrica empotrada en losa. Asentado de muros en el bloque de servicios: 37,6 m². Relleno compactado en patio de maniobras: 39 m³. Armado de acero de vigas del eje 3 con el plano E-104 Rev. B.",
+   "notas": "Un operario con corte leve en la mano izquierda: primeros auxilios, sin descanso médico."
+  },
+  {
+   "fecha": "31/07/2026",
+   "dia": "Viernes",
+   "clima": "Despejado, helada en la madrugada",
+   "personal": 60,
+   "act": "Vaciado de losa del primer nivel, bloque A: 34,8 m³ con bomba. Se tomaron 2 juegos de probetas.",
+   "notas": "Temperatura del concreto al vaciado: 11 °C. Se levantó la observación de seguridad sobre el uso de arnés."
+  },
+  {
+   "fecha": "01/08/2026",
+   "dia": "Sábado",
+   "clima": "Despejado",
+   "personal": 55,
+   "act": "Asentado de muros eje 1, bloque A: 38,0 m². Curado de la losa vaciada.",
+   "notas": "El relleno del segundo tramo no se ejecutó: el rodillo entró a mantenimiento correctivo."
+  },
+  {
+   "fecha": "02/08/2026",
+   "dia": "Domingo",
+   "clima": "Despejado",
+   "personal": 0,
+   "act": "Sin actividad. Guardianía y curado.",
+   "notas": ""
+  },
+  {
+   "fecha": "03/08/2026",
+   "dia": "Lunes",
+   "clima": "Nublado",
+   "personal": 60,
+   "act": "Vaciado de zapatas eje F: 21,7 m³. Vaciado de columnas eje B, segundo nivel: 12,2 m³.",
+   "notas": "Llegó el lote 2 de acero incompleto: faltan 3,2 t de Ø5/8\". La subcontrata de sanitarias trasladó su cuadrilla al frente de agua fría."
+  },
+  {
+   "fecha": "04/08/2026",
+   "dia": "Martes",
+   "clima": "Despejado",
+   "personal": 57,
+   "act": "Reunión de coordinación N.º 07. Charla de seguridad sobre trabajo en altura. Curado y desencofrado parcial.",
+   "notas": "El vaciado de columnas del eje D quedó suspendido por falta de acero. Se envió a la Supervisión la consulta formal sobre los acuerdos del Acta 07."
+  }
+ ]
+};
 
-  var restricciones = [
-    {id:"R-10",texto:"Firma del protocolo de liberación de columnas eje C (PRT-022)",partida:"Concreto en columnas",responsable:"Supervisión",dias:1},
-    {id:"R-04",texto:"Respuesta del RFI-011: interferencia con la viga V-203",partida:"Concreto en vigas y losas",responsable:"Proyectista",dias:2},
-    {id:"R-07",texto:"Respuesta a la consulta CAR-031 sobre los acuerdos del Acta 07",partida:"Concreto en vigas y losas",responsable:"Supervisión",dias:3},
-    {id:"R-01",texto:"Aprobación de los planos de detalle IIE-PL-201",partida:"Instalaciones eléctricas",responsable:"Supervisión",dias:3},
-    {id:"R-05",texto:"Aprobación de la muestra de ladrillo (SUB-004)",partida:"Albañilería",responsable:"Supervisión",dias:6},
-    {id:"R-02",texto:"Llegada y certificación del acero, lote 3 (SUB-007)",partida:"Concreto en columnas",responsable:"Logística",dias:6}
-  ];
+</script>
+<script>
+/* Reglas de cálculo del avance de obra. Un solo lugar para las cifras: el tablero muestra, no vuelve a calcular.
+   1. Programado de una partida: fracción de su plazo transcurrida al corte, entre 0 y 1.
+   2. Ejecutado de una partida: metrado ejecutado al corte entre metrado contractual.
+   3. Peso: parcial contractual entre el monto de las partidas de control. Nunca promedio simple.
+   4. Atraso sin compensar: suma ponderada de lo que cada partida va por debajo de lo programado.
+      Un adelanto se informa aparte y nunca se resta.
+   5. Una partida que aún no entra en su ventana no tiene brecha: lo ejecutado es trabajo anticipado.
+   6. Semáforo: lo decide la ruta crítica. CRÍTICO por encima de 20 pp, EN RIESGO por encima de 10 pp.
+   Uso: var r = CALC.resumen(DATOS);  r.total.prog, r.total.ejec, r.total.atraso, r.critica.atraso, r.semaforo.estado */
+/* ====== Reglas de cálculo (las mismas de la skill metricas-de-obra): una sola fuente para deck y plataforma ====== */
+var CALC = (function () {
+  function d(s) { var p = String(s).split('/'); return Date.UTC(+p[2], +p[1] - 1, +p[0]); }
+  var DIA = 86400000;
+  var UMBRAL_RIESGO = 0.10, UMBRAL_CRITICO = 0.20;
 
-  var incompatibilidades = [
-    {id:"INC-01",texto:"Montante sanitaria Ø4\" atraviesa la viga V-203",severidad:"Alta",doc:"CSSM-CAS-EST-RFI-011"},
-    {id:"INC-02",texto:"Bandeja eléctrica cruza el ducto de extracción del pasillo",severidad:"Media",doc:"Sin documento emitido"},
-    {id:"INC-05",texto:"Tramo de desagüe sin la pendiente mínima",severidad:"Baja",doc:"En revisión del proyectista"}
-  ];
+  function avance(partidas, corte) {
+    var tot = partidas.reduce(function (s, p) { return s + p.parcial; }, 0);
+    return partidas.map(function (p) {
+      var ini = d(p.ini), fin = d(p.fin), dur = Math.max(1, (fin - ini) / DIA);
+      var prog = Math.max(0, Math.min(1, (corte - ini) / DIA / dur));
+      var ejec = p.ej1 / p.met;
+      var noProg = ini > corte;
+      return {
+        item: p.item, nombre: p.nombre, resp: p.resp, critica: p.critica, parcial: p.parcial, peso: p.parcial / tot,
+        prog: prog, ejec: ejec, noProg: noProg, brecha: noProg ? null : prog - ejec,
+        valorizado: p.ej1 * p.pu, causa: p.causa, ini: p.ini, fin: p.fin
+      };
+    });
+  }
+  function agregado(av) {
+    var s = av.reduce(function (a, p) { return a + p.parcial; }, 0), r = { prog: 0, ejec: 0, atraso: 0, adelanto: 0, anticipado: 0 };
+    av.forEach(function (p) {
+      var k = p.parcial / s;
+      r.prog += k * p.prog; r.ejec += k * p.ejec;
+      if (p.noProg) r.anticipado += k * p.ejec;
+      else if (p.brecha > 0) r.atraso += k * p.brecha;
+      else r.adelanto += k * (-p.brecha);
+    });
+    r.neto = r.atraso - r.adelanto; r.dif = r.ejec - r.prog;
+    return r;
+  }
+  function semaforo(av, rc) {
+    var cr = av.filter(function (p) { return p.critica && !p.noProg; });
+    if (!cr.length) return { estado: 'EN PLAZO', por: null };
+    var peor = cr.slice().sort(function (a, b) { return b.brecha - a.brecha; })[0];
+    if (rc.atraso > UMBRAL_CRITICO || peor.brecha > UMBRAL_CRITICO) return { estado: 'CRÍTICO', por: peor };
+    if (rc.atraso > UMBRAL_RIESGO || peor.brecha > UMBRAL_RIESGO) return { estado: 'EN RIESGO', por: peor };
+    return { estado: 'EN PLAZO', por: peor };
+  }
+  function estadoPartida(p) {
+    if (p.noProg) return 'Aún no entra en ventana';
+    if (p.brecha > UMBRAL_CRITICO) return 'Crítico';
+    if (p.brecha > UMBRAL_RIESGO) return 'En riesgo';
+    if (p.brecha < 0) return 'Adelantada';
+    return 'En plazo';
+  }
+  function resumen(datos) {
+    var corte = d(datos.obra.corte), av = avance(datos.partidas, corte);
+    var tot = agregado(av), cri = agregado(av.filter(function (p) { return p.critica; }));
+    var sem = semaforo(av, cri);
+    var ppc = datos.ppc[datos.ppc.length - 1];
+    var valor = av.reduce(function (s, p) { return s + p.valorizado; }, 0);
+    return { av: av, total: tot, critica: cri, semaforo: sem, ppcActual: ppc.ppc, valorizado: valor,
+             contractual: datos.partidas.reduce(function (s, p) { return s + p.parcial; }, 0) };
+  }
+  function pct(x, n) { return (x * 100).toFixed(n === undefined ? 1 : n).replace('.', ','); }
+  return { d: d, avance: avance, agregado: agregado, semaforo: semaforo, estadoPartida: estadoPartida, resumen: resumen, pct: pct,
+           UMBRAL_RIESGO: UMBRAL_RIESGO, UMBRAL_CRITICO: UMBRAL_CRITICO };
+})();
 
-  function fmt1(n){ return n.toLocaleString("es-PE",{minimumFractionDigits:1,maximumFractionDigits:1}); }
+</script>
+<script>
+/* Modelo simplificado de San Marcos: cada elemento con GlobalId, nivel, partida y estado.
+   Estados: ejecutado, atrasado, bloqueado, anticipado, porEjecutar. «caja» = [x0, y0, z0, x1, y1, z1] en metros de ejercicio.
+   Vista isométrica: x' = (x - y) * 0.866, y' = (x + y) * 0.5 - z. Ilustrativo: no es un metrado. */
+var MODELO_DATA = {
+ "estados": {
+  "ejecutado": {
+   "n": "Ejecutado",
+   "c": "#2EA659",
+   "s": "#DDF1E4"
+  },
+  "atrasado": {
+   "n": "Atrasado",
+   "c": "#F59E1A",
+   "s": "#FDEBD0"
+  },
+  "bloqueado": {
+   "n": "Bloqueado por restricción",
+   "c": "#D62629",
+   "s": "#F9DADA"
+  },
+  "anticipado": {
+   "n": "Trabajo anticipado",
+   "c": "#2673D9",
+   "s": "#DCE8F6"
+  },
+  "porEjecutar": {
+   "n": "Por ejecutar",
+   "c": "#B8BDC4",
+   "s": "#E6EBF1"
+  }
+ },
+ "elementos": [
+  {
+   "nombre": "Z-A1",
+   "globalId": "9TsqepnSZ1_C926KRVVw2B",
+   "tipoIfc": "IfcFooting",
+   "nivel": 0,
+   "eje": "A-1",
+   "partida": "03.01",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    -0.27,
+    -0.27,
+    -0.04,
+    0.27,
+    0.27,
+    0.18
+   ]
+  },
+  {
+   "nombre": "Z-A2",
+   "globalId": "7rj39b9f6djl3wdm3NS3Ic",
+   "tipoIfc": "IfcFooting",
+   "nivel": 0,
+   "eje": "A-2",
+   "partida": "03.01",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    -0.27,
+    0.73,
+    -0.04,
+    0.27,
+    1.27,
+    0.18
+   ]
+  },
+  {
+   "nombre": "Z-A3",
+   "globalId": "FZq8HQ47R_UJkg$NlQpwmk",
+   "tipoIfc": "IfcFooting",
+   "nivel": 0,
+   "eje": "A-3",
+   "partida": "03.01",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    -0.27,
+    1.73,
+    -0.04,
+    0.27,
+    2.27,
+    0.18
+   ]
+  },
+  {
+   "nombre": "Z-A4",
+   "globalId": "aiFFWpdQ5ga6bojHmaAcxm",
+   "tipoIfc": "IfcFooting",
+   "nivel": 0,
+   "eje": "A-4",
+   "partida": "03.01",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    -0.27,
+    2.73,
+    -0.04,
+    0.27,
+    3.27,
+    0.18
+   ]
+  },
+  {
+   "nombre": "Z-A5",
+   "globalId": "t2G0XcMF7snzpDBFcwaDEB",
+   "tipoIfc": "IfcFooting",
+   "nivel": 0,
+   "eje": "A-5",
+   "partida": "03.01",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    -0.27,
+    3.73,
+    -0.04,
+    0.27,
+    4.27,
+    0.18
+   ]
+  },
+  {
+   "nombre": "Z-B1",
+   "globalId": "cGJ2lbmkL1yzDGbQiaxz8M",
+   "tipoIfc": "IfcFooting",
+   "nivel": 0,
+   "eje": "B-1",
+   "partida": "03.01",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    0.73,
+    -0.27,
+    -0.04,
+    1.27,
+    0.27,
+    0.18
+   ]
+  },
+  {
+   "nombre": "Z-B2",
+   "globalId": "gzRenZRKifwKnLOQAs$3nS",
+   "tipoIfc": "IfcFooting",
+   "nivel": 0,
+   "eje": "B-2",
+   "partida": "03.01",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    0.73,
+    0.73,
+    -0.04,
+    1.27,
+    1.27,
+    0.18
+   ]
+  },
+  {
+   "nombre": "Z-B3",
+   "globalId": "qz0EFsM$4KAgZJEhxaq1mp",
+   "tipoIfc": "IfcFooting",
+   "nivel": 0,
+   "eje": "B-3",
+   "partida": "03.01",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    0.73,
+    1.73,
+    -0.04,
+    1.27,
+    2.27,
+    0.18
+   ]
+  },
+  {
+   "nombre": "Z-B4",
+   "globalId": "kY_RG_ho3rCxuo7eARmwN0",
+   "tipoIfc": "IfcFooting",
+   "nivel": 0,
+   "eje": "B-4",
+   "partida": "03.01",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    0.73,
+    2.73,
+    -0.04,
+    1.27,
+    3.27,
+    0.18
+   ]
+  },
+  {
+   "nombre": "Z-B5",
+   "globalId": "91tTAdYpbTrECgliRDLBrX",
+   "tipoIfc": "IfcFooting",
+   "nivel": 0,
+   "eje": "B-5",
+   "partida": "03.01",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    0.73,
+    3.73,
+    -0.04,
+    1.27,
+    4.27,
+    0.18
+   ]
+  },
+  {
+   "nombre": "Z-C1",
+   "globalId": "JKh8SEjYneSIcWAlt8z1fg",
+   "tipoIfc": "IfcFooting",
+   "nivel": 0,
+   "eje": "C-1",
+   "partida": "03.01",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    1.73,
+    -0.27,
+    -0.04,
+    2.27,
+    0.27,
+    0.18
+   ]
+  },
+  {
+   "nombre": "Z-C2",
+   "globalId": "mUBoQLL5e7qaa38sXZXfw9",
+   "tipoIfc": "IfcFooting",
+   "nivel": 0,
+   "eje": "C-2",
+   "partida": "03.01",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    1.73,
+    0.73,
+    -0.04,
+    2.27,
+    1.27,
+    0.18
+   ]
+  },
+  {
+   "nombre": "Z-C3",
+   "globalId": "4q6_AlczbLF6Ci4Re0W$I9",
+   "tipoIfc": "IfcFooting",
+   "nivel": 0,
+   "eje": "C-3",
+   "partida": "03.01",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    1.73,
+    1.73,
+    -0.04,
+    2.27,
+    2.27,
+    0.18
+   ]
+  },
+  {
+   "nombre": "Z-C4",
+   "globalId": "hOy8IEYsRrczN_lEHTAhv0",
+   "tipoIfc": "IfcFooting",
+   "nivel": 0,
+   "eje": "C-4",
+   "partida": "03.01",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    1.73,
+    2.73,
+    -0.04,
+    2.27,
+    3.27,
+    0.18
+   ]
+  },
+  {
+   "nombre": "Z-C5",
+   "globalId": "YyhWI3vXVcFi_dGzSxO26Y",
+   "tipoIfc": "IfcFooting",
+   "nivel": 0,
+   "eje": "C-5",
+   "partida": "03.01",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    1.73,
+    3.73,
+    -0.04,
+    2.27,
+    4.27,
+    0.18
+   ]
+  },
+  {
+   "nombre": "Z-D1",
+   "globalId": "4iWtC07PB42$tkCh4BAzsv",
+   "tipoIfc": "IfcFooting",
+   "nivel": 0,
+   "eje": "D-1",
+   "partida": "03.01",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    2.73,
+    -0.27,
+    -0.04,
+    3.27,
+    0.27,
+    0.18
+   ]
+  },
+  {
+   "nombre": "Z-D2",
+   "globalId": "kCBc5z9jzMDt$j0W0uqrav",
+   "tipoIfc": "IfcFooting",
+   "nivel": 0,
+   "eje": "D-2",
+   "partida": "03.01",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    2.73,
+    0.73,
+    -0.04,
+    3.27,
+    1.27,
+    0.18
+   ]
+  },
+  {
+   "nombre": "Z-D3",
+   "globalId": "5jfVc0e4NuCs0rfBOkuHMv",
+   "tipoIfc": "IfcFooting",
+   "nivel": 0,
+   "eje": "D-3",
+   "partida": "03.01",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    2.73,
+    1.73,
+    -0.04,
+    3.27,
+    2.27,
+    0.18
+   ]
+  },
+  {
+   "nombre": "Z-D4",
+   "globalId": "vCSA$oVonWhhGZdb1Y7tg7",
+   "tipoIfc": "IfcFooting",
+   "nivel": 0,
+   "eje": "D-4",
+   "partida": "03.01",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    2.73,
+    2.73,
+    -0.04,
+    3.27,
+    3.27,
+    0.18
+   ]
+  },
+  {
+   "nombre": "Z-D5",
+   "globalId": "ZKZH1TYDRgMWo53Frj6fRH",
+   "tipoIfc": "IfcFooting",
+   "nivel": 0,
+   "eje": "D-5",
+   "partida": "03.01",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    2.73,
+    3.73,
+    -0.04,
+    3.27,
+    4.27,
+    0.18
+   ]
+  },
+  {
+   "nombre": "Z-E1",
+   "globalId": "u1FDVsfeaxMFXpaGUrJXo8",
+   "tipoIfc": "IfcFooting",
+   "nivel": 0,
+   "eje": "E-1",
+   "partida": "03.01",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    3.73,
+    -0.27,
+    -0.04,
+    4.27,
+    0.27,
+    0.18
+   ]
+  },
+  {
+   "nombre": "Z-E2",
+   "globalId": "LHEsOaBr6iDN8Lad6LV4RH",
+   "tipoIfc": "IfcFooting",
+   "nivel": 0,
+   "eje": "E-2",
+   "partida": "03.01",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    3.73,
+    0.73,
+    -0.04,
+    4.27,
+    1.27,
+    0.18
+   ]
+  },
+  {
+   "nombre": "Z-E3",
+   "globalId": "ZDqYarxtlwW79etJFiLtwl",
+   "tipoIfc": "IfcFooting",
+   "nivel": 0,
+   "eje": "E-3",
+   "partida": "03.01",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    3.73,
+    1.73,
+    -0.04,
+    4.27,
+    2.27,
+    0.18
+   ]
+  },
+  {
+   "nombre": "Z-E4",
+   "globalId": "Tvw9xZGiMBhUJYatyrMYpm",
+   "tipoIfc": "IfcFooting",
+   "nivel": 0,
+   "eje": "E-4",
+   "partida": "03.01",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    3.73,
+    2.73,
+    -0.04,
+    4.27,
+    3.27,
+    0.18
+   ]
+  },
+  {
+   "nombre": "Z-E5",
+   "globalId": "jGs__A8KLhFhHYxggcMP4j",
+   "tipoIfc": "IfcFooting",
+   "nivel": 0,
+   "eje": "E-5",
+   "partida": "03.01",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    3.73,
+    3.73,
+    -0.04,
+    4.27,
+    4.27,
+    0.18
+   ]
+  },
+  {
+   "nombre": "Z-F1",
+   "globalId": "ybZOTGZI6Glif0atO3EKLH",
+   "tipoIfc": "IfcFooting",
+   "nivel": 0,
+   "eje": "F-1",
+   "partida": "03.01",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    4.73,
+    -0.27,
+    -0.04,
+    5.27,
+    0.27,
+    0.18
+   ]
+  },
+  {
+   "nombre": "Z-F2",
+   "globalId": "meXFey2yj3d8_t9T$IEfS_",
+   "tipoIfc": "IfcFooting",
+   "nivel": 0,
+   "eje": "F-2",
+   "partida": "03.01",
+   "estado": "atrasado",
+   "enlace": "T-09 · mixer con slump fuera de rango, sin reposición",
+   "caja": [
+    4.73,
+    0.73,
+    -0.04,
+    5.27,
+    1.27,
+    0.18
+   ]
+  },
+  {
+   "nombre": "Z-F3",
+   "globalId": "xpAlv1dMYgEzOgvbjPBB_3",
+   "tipoIfc": "IfcFooting",
+   "nivel": 0,
+   "eje": "F-3",
+   "partida": "03.01",
+   "estado": "atrasado",
+   "enlace": "T-09 · mixer con slump fuera de rango, sin reposición",
+   "caja": [
+    4.73,
+    1.73,
+    -0.04,
+    5.27,
+    2.27,
+    0.18
+   ]
+  },
+  {
+   "nombre": "Z-F4",
+   "globalId": "j69xum85iUIKTz1CvIhUQh",
+   "tipoIfc": "IfcFooting",
+   "nivel": 0,
+   "eje": "F-4",
+   "partida": "03.01",
+   "estado": "atrasado",
+   "enlace": "T-09 · mixer con slump fuera de rango, sin reposición",
+   "caja": [
+    4.73,
+    2.73,
+    -0.04,
+    5.27,
+    3.27,
+    0.18
+   ]
+  },
+  {
+   "nombre": "Z-F5",
+   "globalId": "2i3gqdN9WOKthc$N2VCYin",
+   "tipoIfc": "IfcFooting",
+   "nivel": 0,
+   "eje": "F-5",
+   "partida": "03.01",
+   "estado": "atrasado",
+   "enlace": "T-09 · mixer con slump fuera de rango, sin reposición",
+   "caja": [
+    4.73,
+    3.73,
+    -0.04,
+    5.27,
+    4.27,
+    0.18
+   ]
+  },
+  {
+   "nombre": "C-A1 N1",
+   "globalId": "u6NJ5SRquxwr4MyhahLXxE",
+   "tipoIfc": "IfcColumn",
+   "nivel": 1,
+   "eje": "A-1",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    -0.1,
+    -0.1,
+    0.18,
+    0.1,
+    0.1,
+    1
+   ]
+  },
+  {
+   "nombre": "C-A2 N1",
+   "globalId": "P7IfHZFeg33AquMDa3GTRX",
+   "tipoIfc": "IfcColumn",
+   "nivel": 1,
+   "eje": "A-2",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    -0.1,
+    0.9,
+    0.18,
+    0.1,
+    1.1,
+    1
+   ]
+  },
+  {
+   "nombre": "C-A3 N1",
+   "globalId": "TsFR2dmDayyMFPzlVy35Ia",
+   "tipoIfc": "IfcColumn",
+   "nivel": 1,
+   "eje": "A-3",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    -0.1,
+    1.9,
+    0.18,
+    0.1,
+    2.1,
+    1
+   ]
+  },
+  {
+   "nombre": "C-A4 N1",
+   "globalId": "Xc73XZgyMj7TTKx5eZzcxC",
+   "tipoIfc": "IfcColumn",
+   "nivel": 1,
+   "eje": "A-4",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    -0.1,
+    2.9,
+    0.18,
+    0.1,
+    3.1,
+    1
+   ]
+  },
+  {
+   "nombre": "C-A5 N1",
+   "globalId": "aWlw1nzmgjj1F2YypOOxgZ",
+   "tipoIfc": "IfcColumn",
+   "nivel": 1,
+   "eje": "A-5",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    -0.1,
+    3.9,
+    0.18,
+    0.1,
+    4.1,
+    1
+   ]
+  },
+  {
+   "nombre": "C-B1 N1",
+   "globalId": "2NK$G$nTHaDkjUaZ7hpLWd",
+   "tipoIfc": "IfcColumn",
+   "nivel": 1,
+   "eje": "B-1",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    0.9,
+    -0.1,
+    0.18,
+    1.1,
+    0.1,
+    1
+   ]
+  },
+  {
+   "nombre": "C-B2 N1",
+   "globalId": "RZQjlkaDtdwOXzLeGkY1FG",
+   "tipoIfc": "IfcColumn",
+   "nivel": 1,
+   "eje": "B-2",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    0.9,
+    0.9,
+    0.18,
+    1.1,
+    1.1,
+    1
+   ]
+  },
+  {
+   "nombre": "C-B3 N1",
+   "globalId": "lWvQXYOGoOqZMriX4eL6VE",
+   "tipoIfc": "IfcColumn",
+   "nivel": 1,
+   "eje": "B-3",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    0.9,
+    1.9,
+    0.18,
+    1.1,
+    2.1,
+    1
+   ]
+  },
+  {
+   "nombre": "C-B4 N1",
+   "globalId": "s4hJH_kN6I91EQvKUwjUwO",
+   "tipoIfc": "IfcColumn",
+   "nivel": 1,
+   "eje": "B-4",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    0.9,
+    2.9,
+    0.18,
+    1.1,
+    3.1,
+    1
+   ]
+  },
+  {
+   "nombre": "C-B5 N1",
+   "globalId": "AuUAvLecLipSLEbXS1Wx5b",
+   "tipoIfc": "IfcColumn",
+   "nivel": 1,
+   "eje": "B-5",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    0.9,
+    3.9,
+    0.18,
+    1.1,
+    4.1,
+    1
+   ]
+  },
+  {
+   "nombre": "C-C1 N1",
+   "globalId": "7b$Ppr9N4CvWw_FtxJBelC",
+   "tipoIfc": "IfcColumn",
+   "nivel": 1,
+   "eje": "C-1",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    1.9,
+    -0.1,
+    0.18,
+    2.1,
+    0.1,
+    1
+   ]
+  },
+  {
+   "nombre": "C-C2 N1",
+   "globalId": "JUEEV2JpMWx0EUrfWRA6uQ",
+   "tipoIfc": "IfcColumn",
+   "nivel": 1,
+   "eje": "C-2",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    1.9,
+    0.9,
+    0.18,
+    2.1,
+    1.1,
+    1
+   ]
+  },
+  {
+   "nombre": "C-C3 N1",
+   "globalId": "vL3ckBQkJqcO5VVmzehUVO",
+   "tipoIfc": "IfcColumn",
+   "nivel": 1,
+   "eje": "C-3",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    1.9,
+    1.9,
+    0.18,
+    2.1,
+    2.1,
+    1
+   ]
+  },
+  {
+   "nombre": "C-C4 N1",
+   "globalId": "oJm8iAtmFr6$3O9VgNscKV",
+   "tipoIfc": "IfcColumn",
+   "nivel": 1,
+   "eje": "C-4",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    1.9,
+    2.9,
+    0.18,
+    2.1,
+    3.1,
+    1
+   ]
+  },
+  {
+   "nombre": "C-C5 N1",
+   "globalId": "dnnaKHx2XzW6yD57MTJFCP",
+   "tipoIfc": "IfcColumn",
+   "nivel": 1,
+   "eje": "C-5",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    1.9,
+    3.9,
+    0.18,
+    2.1,
+    4.1,
+    1
+   ]
+  },
+  {
+   "nombre": "C-D1 N1",
+   "globalId": "r6Q8k36gq6nR5R$rs_c0Nm",
+   "tipoIfc": "IfcColumn",
+   "nivel": 1,
+   "eje": "D-1",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    2.9,
+    -0.1,
+    0.18,
+    3.1,
+    0.1,
+    1
+   ]
+  },
+  {
+   "nombre": "C-D2 N1",
+   "globalId": "w91W4ypt1oFSWAeg6USfXm",
+   "tipoIfc": "IfcColumn",
+   "nivel": 1,
+   "eje": "D-2",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    2.9,
+    0.9,
+    0.18,
+    3.1,
+    1.1,
+    1
+   ]
+  },
+  {
+   "nombre": "C-D3 N1",
+   "globalId": "g8hOB13GZYh7h9iQzLRIkR",
+   "tipoIfc": "IfcColumn",
+   "nivel": 1,
+   "eje": "D-3",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    2.9,
+    1.9,
+    0.18,
+    3.1,
+    2.1,
+    1
+   ]
+  },
+  {
+   "nombre": "C-D4 N1",
+   "globalId": "1vqPMlQLYpMA14QrRXpYYB",
+   "tipoIfc": "IfcColumn",
+   "nivel": 1,
+   "eje": "D-4",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    2.9,
+    2.9,
+    0.18,
+    3.1,
+    3.1,
+    1
+   ]
+  },
+  {
+   "nombre": "C-D5 N1",
+   "globalId": "43RPpJueWoorJXPWpDyQcp",
+   "tipoIfc": "IfcColumn",
+   "nivel": 1,
+   "eje": "D-5",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    2.9,
+    3.9,
+    0.18,
+    3.1,
+    4.1,
+    1
+   ]
+  },
+  {
+   "nombre": "C-E1 N1",
+   "globalId": "GeMQ9qc3BjHNLFKPyuoc2D",
+   "tipoIfc": "IfcColumn",
+   "nivel": 1,
+   "eje": "E-1",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    3.9,
+    -0.1,
+    0.18,
+    4.1,
+    0.1,
+    1
+   ]
+  },
+  {
+   "nombre": "C-E2 N1",
+   "globalId": "$DZNcxuTqOo$KIvOQVTZZR",
+   "tipoIfc": "IfcColumn",
+   "nivel": 1,
+   "eje": "E-2",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    3.9,
+    0.9,
+    0.18,
+    4.1,
+    1.1,
+    1
+   ]
+  },
+  {
+   "nombre": "C-E3 N1",
+   "globalId": "$EIRBPOwn2E60Ah2x6QRc1",
+   "tipoIfc": "IfcColumn",
+   "nivel": 1,
+   "eje": "E-3",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    3.9,
+    1.9,
+    0.18,
+    4.1,
+    2.1,
+    1
+   ]
+  },
+  {
+   "nombre": "C-E4 N1",
+   "globalId": "Sy$68re9M$L3qJ$fbetTeS",
+   "tipoIfc": "IfcColumn",
+   "nivel": 1,
+   "eje": "E-4",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    3.9,
+    2.9,
+    0.18,
+    4.1,
+    3.1,
+    1
+   ]
+  },
+  {
+   "nombre": "C-E5 N1",
+   "globalId": "kM5PGSzkkzK1R4f2eocJQ4",
+   "tipoIfc": "IfcColumn",
+   "nivel": 1,
+   "eje": "E-5",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    3.9,
+    3.9,
+    0.18,
+    4.1,
+    4.1,
+    1
+   ]
+  },
+  {
+   "nombre": "C-F1 N1",
+   "globalId": "fqGS6mp2kacK1i3hcYyiqC",
+   "tipoIfc": "IfcColumn",
+   "nivel": 1,
+   "eje": "F-1",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    4.9,
+    -0.1,
+    0.18,
+    5.1,
+    0.1,
+    1
+   ]
+  },
+  {
+   "nombre": "C-F2 N1",
+   "globalId": "86C8DV76U4gpCdxXlky_iU",
+   "tipoIfc": "IfcColumn",
+   "nivel": 1,
+   "eje": "F-2",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    4.9,
+    0.9,
+    0.18,
+    5.1,
+    1.1,
+    1
+   ]
+  },
+  {
+   "nombre": "C-F3 N1",
+   "globalId": "ynFGIfUySmBVW55wHEyf1e",
+   "tipoIfc": "IfcColumn",
+   "nivel": 1,
+   "eje": "F-3",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    4.9,
+    1.9,
+    0.18,
+    5.1,
+    2.1,
+    1
+   ]
+  },
+  {
+   "nombre": "C-F4 N1",
+   "globalId": "CDVsw_kJCqbNYqa_p_8_AL",
+   "tipoIfc": "IfcColumn",
+   "nivel": 1,
+   "eje": "F-4",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    4.9,
+    2.9,
+    0.18,
+    5.1,
+    3.1,
+    1
+   ]
+  },
+  {
+   "nombre": "C-F5 N1",
+   "globalId": "_0sEIagLUx0ruHtcMoz8mG",
+   "tipoIfc": "IfcColumn",
+   "nivel": 1,
+   "eje": "F-5",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    4.9,
+    3.9,
+    0.18,
+    5.1,
+    4.1,
+    1
+   ]
+  },
+  {
+   "nombre": "C-A1 N2",
+   "globalId": "H$tp3AGFljUOGHpK2fMlPv",
+   "tipoIfc": "IfcColumn",
+   "nivel": 2,
+   "eje": "A-1",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    -0.1,
+    -0.1,
+    1.93,
+    0.1,
+    0.1,
+    2.75
+   ]
+  },
+  {
+   "nombre": "C-A2 N2",
+   "globalId": "fTpnJmGMUX1yu_bW24TnFp",
+   "tipoIfc": "IfcColumn",
+   "nivel": 2,
+   "eje": "A-2",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    -0.1,
+    0.9,
+    1.93,
+    0.1,
+    1.1,
+    2.75
+   ]
+  },
+  {
+   "nombre": "C-A3 N2",
+   "globalId": "bMH1UueOI20$ZlpIPjl6KO",
+   "tipoIfc": "IfcColumn",
+   "nivel": 2,
+   "eje": "A-3",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    -0.1,
+    1.9,
+    1.93,
+    0.1,
+    2.1,
+    2.75
+   ]
+  },
+  {
+   "nombre": "C-A4 N2",
+   "globalId": "Mzmsi6dpS_ojr24g$4aufm",
+   "tipoIfc": "IfcColumn",
+   "nivel": 2,
+   "eje": "A-4",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    -0.1,
+    2.9,
+    1.93,
+    0.1,
+    3.1,
+    2.75
+   ]
+  },
+  {
+   "nombre": "C-A5 N2",
+   "globalId": "BgJscwI428AJrSqG8pEFXi",
+   "tipoIfc": "IfcColumn",
+   "nivel": 2,
+   "eje": "A-5",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    -0.1,
+    3.9,
+    1.93,
+    0.1,
+    4.1,
+    2.75
+   ]
+  },
+  {
+   "nombre": "C-B1 N2",
+   "globalId": "SS88GvwBWqR4noHnh7_sCj",
+   "tipoIfc": "IfcColumn",
+   "nivel": 2,
+   "eje": "B-1",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    0.9,
+    -0.1,
+    1.93,
+    1.1,
+    0.1,
+    2.75
+   ]
+  },
+  {
+   "nombre": "C-B2 N2",
+   "globalId": "fGoqgz3bWI06UXqq7JWGk1",
+   "tipoIfc": "IfcColumn",
+   "nivel": 2,
+   "eje": "B-2",
+   "partida": "03.02",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    0.9,
+    0.9,
+    1.93,
+    1.1,
+    1.1,
+    2.75
+   ]
+  },
+  {
+   "nombre": "C-B3 N2",
+   "globalId": "3GpYNVMx8rf79zHJVFjlJS",
+   "tipoIfc": "IfcColumn",
+   "nivel": 2,
+   "eje": "B-3",
+   "partida": "03.02",
+   "estado": "atrasado",
+   "enlace": "T-03 · lote 2 de acero incompleto",
+   "caja": [
+    0.9,
+    1.9,
+    1.93,
+    1.1,
+    2.1,
+    2.75
+   ]
+  },
+  {
+   "nombre": "C-B4 N2",
+   "globalId": "4fMwo6co9nAUqMJpqilsN6",
+   "tipoIfc": "IfcColumn",
+   "nivel": 2,
+   "eje": "B-4",
+   "partida": "03.02",
+   "estado": "atrasado",
+   "enlace": "T-03 · lote 2 de acero incompleto",
+   "caja": [
+    0.9,
+    2.9,
+    1.93,
+    1.1,
+    3.1,
+    2.75
+   ]
+  },
+  {
+   "nombre": "C-B5 N2",
+   "globalId": "EvurPs$mjpV8M$qEoU1jz5",
+   "tipoIfc": "IfcColumn",
+   "nivel": 2,
+   "eje": "B-5",
+   "partida": "03.02",
+   "estado": "atrasado",
+   "enlace": "T-03 · lote 2 de acero incompleto",
+   "caja": [
+    0.9,
+    3.9,
+    1.93,
+    1.1,
+    4.1,
+    2.75
+   ]
+  },
+  {
+   "nombre": "C-C1 N2",
+   "globalId": "m7Ncj7iOu_INuz_WpzH3pS",
+   "tipoIfc": "IfcColumn",
+   "nivel": 2,
+   "eje": "C-1",
+   "partida": "03.02",
+   "estado": "bloqueado",
+   "enlace": "R-10 · protocolo PRT-022 sin firmar",
+   "caja": [
+    1.9,
+    -0.1,
+    1.93,
+    2.1,
+    0.1,
+    2.75
+   ]
+  },
+  {
+   "nombre": "C-C2 N2",
+   "globalId": "Iw1z$xM44pfBW7YLXtVY$L",
+   "tipoIfc": "IfcColumn",
+   "nivel": 2,
+   "eje": "C-2",
+   "partida": "03.02",
+   "estado": "bloqueado",
+   "enlace": "R-10 · protocolo PRT-022 sin firmar",
+   "caja": [
+    1.9,
+    0.9,
+    1.93,
+    2.1,
+    1.1,
+    2.75
+   ]
+  },
+  {
+   "nombre": "C-C3 N2",
+   "globalId": "gCaJCy0T_d1DdZO1g7qNPJ",
+   "tipoIfc": "IfcColumn",
+   "nivel": 2,
+   "eje": "C-3",
+   "partida": "03.02",
+   "estado": "bloqueado",
+   "enlace": "R-10 · protocolo PRT-022 sin firmar",
+   "caja": [
+    1.9,
+    1.9,
+    1.93,
+    2.1,
+    2.1,
+    2.75
+   ]
+  },
+  {
+   "nombre": "C-C4 N2",
+   "globalId": "yi31E_twin5h_y$0fcK4zc",
+   "tipoIfc": "IfcColumn",
+   "nivel": 2,
+   "eje": "C-4",
+   "partida": "03.02",
+   "estado": "bloqueado",
+   "enlace": "R-10 · protocolo PRT-022 sin firmar",
+   "caja": [
+    1.9,
+    2.9,
+    1.93,
+    2.1,
+    3.1,
+    2.75
+   ]
+  },
+  {
+   "nombre": "C-C5 N2",
+   "globalId": "chPRWnXojtlC3nB0aGpVtU",
+   "tipoIfc": "IfcColumn",
+   "nivel": 2,
+   "eje": "C-5",
+   "partida": "03.02",
+   "estado": "bloqueado",
+   "enlace": "R-10 · protocolo PRT-022 sin firmar",
+   "caja": [
+    1.9,
+    3.9,
+    1.93,
+    2.1,
+    4.1,
+    2.75
+   ]
+  },
+  {
+   "nombre": "C-D1 N2",
+   "globalId": "suEWW9F4vFeH1p8bNY06dq",
+   "tipoIfc": "IfcColumn",
+   "nivel": 2,
+   "eje": "D-1",
+   "partida": "03.02",
+   "estado": "bloqueado",
+   "enlace": "R-02 · acero del lote 3 sin llegar ni certificar",
+   "caja": [
+    2.9,
+    -0.1,
+    1.93,
+    3.1,
+    0.1,
+    2.75
+   ]
+  },
+  {
+   "nombre": "C-D2 N2",
+   "globalId": "OA4aozFmlpGyyS03I8BWlx",
+   "tipoIfc": "IfcColumn",
+   "nivel": 2,
+   "eje": "D-2",
+   "partida": "03.02",
+   "estado": "bloqueado",
+   "enlace": "R-02 · acero del lote 3 sin llegar ni certificar",
+   "caja": [
+    2.9,
+    0.9,
+    1.93,
+    3.1,
+    1.1,
+    2.75
+   ]
+  },
+  {
+   "nombre": "C-D3 N2",
+   "globalId": "N9YUlrTBoEKmWa4BeCp_Yt",
+   "tipoIfc": "IfcColumn",
+   "nivel": 2,
+   "eje": "D-3",
+   "partida": "03.02",
+   "estado": "bloqueado",
+   "enlace": "R-02 · acero del lote 3 sin llegar ni certificar",
+   "caja": [
+    2.9,
+    1.9,
+    1.93,
+    3.1,
+    2.1,
+    2.75
+   ]
+  },
+  {
+   "nombre": "C-D4 N2",
+   "globalId": "Tg93lbkgWGQybSODJJYGCv",
+   "tipoIfc": "IfcColumn",
+   "nivel": 2,
+   "eje": "D-4",
+   "partida": "03.02",
+   "estado": "bloqueado",
+   "enlace": "R-02 · acero del lote 3 sin llegar ni certificar",
+   "caja": [
+    2.9,
+    2.9,
+    1.93,
+    3.1,
+    3.1,
+    2.75
+   ]
+  },
+  {
+   "nombre": "C-D5 N2",
+   "globalId": "LlRyrYTvShXu2LzReOldmx",
+   "tipoIfc": "IfcColumn",
+   "nivel": 2,
+   "eje": "D-5",
+   "partida": "03.02",
+   "estado": "bloqueado",
+   "enlace": "R-02 · acero del lote 3 sin llegar ni certificar",
+   "caja": [
+    2.9,
+    3.9,
+    1.93,
+    3.1,
+    4.1,
+    2.75
+   ]
+  },
+  {
+   "nombre": "C-E1 N2",
+   "globalId": "UE11fyTUEBHpxBkvIfp_Wx",
+   "tipoIfc": "IfcColumn",
+   "nivel": 2,
+   "eje": "E-1",
+   "partida": "03.02",
+   "estado": "bloqueado",
+   "enlace": "R-02 · acero del lote 3 sin llegar ni certificar",
+   "caja": [
+    3.9,
+    -0.1,
+    1.93,
+    4.1,
+    0.1,
+    2.75
+   ]
+  },
+  {
+   "nombre": "C-E2 N2",
+   "globalId": "0KwZkoXHBYUcG3Rblrjz88",
+   "tipoIfc": "IfcColumn",
+   "nivel": 2,
+   "eje": "E-2",
+   "partida": "03.02",
+   "estado": "bloqueado",
+   "enlace": "R-02 · acero del lote 3 sin llegar ni certificar",
+   "caja": [
+    3.9,
+    0.9,
+    1.93,
+    4.1,
+    1.1,
+    2.75
+   ]
+  },
+  {
+   "nombre": "C-E3 N2",
+   "globalId": "imXBQ$itOdggR$nWg2oDPc",
+   "tipoIfc": "IfcColumn",
+   "nivel": 2,
+   "eje": "E-3",
+   "partida": "03.02",
+   "estado": "bloqueado",
+   "enlace": "R-02 · acero del lote 3 sin llegar ni certificar",
+   "caja": [
+    3.9,
+    1.9,
+    1.93,
+    4.1,
+    2.1,
+    2.75
+   ]
+  },
+  {
+   "nombre": "C-E4 N2",
+   "globalId": "s0pF8lntaFYPudis942$LY",
+   "tipoIfc": "IfcColumn",
+   "nivel": 2,
+   "eje": "E-4",
+   "partida": "03.02",
+   "estado": "bloqueado",
+   "enlace": "R-02 · acero del lote 3 sin llegar ni certificar",
+   "caja": [
+    3.9,
+    2.9,
+    1.93,
+    4.1,
+    3.1,
+    2.75
+   ]
+  },
+  {
+   "nombre": "C-E5 N2",
+   "globalId": "lFc2P9qXMMiOm9K94Qq7nx",
+   "tipoIfc": "IfcColumn",
+   "nivel": 2,
+   "eje": "E-5",
+   "partida": "03.02",
+   "estado": "bloqueado",
+   "enlace": "R-02 · acero del lote 3 sin llegar ni certificar",
+   "caja": [
+    3.9,
+    3.9,
+    1.93,
+    4.1,
+    4.1,
+    2.75
+   ]
+  },
+  {
+   "nombre": "C-F1 N2",
+   "globalId": "Sa0m0yr6LpdmfhQF1Hs28I",
+   "tipoIfc": "IfcColumn",
+   "nivel": 2,
+   "eje": "F-1",
+   "partida": "03.02",
+   "estado": "bloqueado",
+   "enlace": "R-02 · acero del lote 3 sin llegar ni certificar",
+   "caja": [
+    4.9,
+    -0.1,
+    1.93,
+    5.1,
+    0.1,
+    2.75
+   ]
+  },
+  {
+   "nombre": "C-F2 N2",
+   "globalId": "DAYCGWlfJs626InszXDQXI",
+   "tipoIfc": "IfcColumn",
+   "nivel": 2,
+   "eje": "F-2",
+   "partida": "03.02",
+   "estado": "bloqueado",
+   "enlace": "R-02 · acero del lote 3 sin llegar ni certificar",
+   "caja": [
+    4.9,
+    0.9,
+    1.93,
+    5.1,
+    1.1,
+    2.75
+   ]
+  },
+  {
+   "nombre": "C-F3 N2",
+   "globalId": "Md6kvvryrSjevaLO8Dc9wd",
+   "tipoIfc": "IfcColumn",
+   "nivel": 2,
+   "eje": "F-3",
+   "partida": "03.02",
+   "estado": "bloqueado",
+   "enlace": "R-02 · acero del lote 3 sin llegar ni certificar",
+   "caja": [
+    4.9,
+    1.9,
+    1.93,
+    5.1,
+    2.1,
+    2.75
+   ]
+  },
+  {
+   "nombre": "C-F4 N2",
+   "globalId": "PnqVmDD4iH$_BObMFc7wag",
+   "tipoIfc": "IfcColumn",
+   "nivel": 2,
+   "eje": "F-4",
+   "partida": "03.02",
+   "estado": "bloqueado",
+   "enlace": "R-02 · acero del lote 3 sin llegar ni certificar",
+   "caja": [
+    4.9,
+    2.9,
+    1.93,
+    5.1,
+    3.1,
+    2.75
+   ]
+  },
+  {
+   "nombre": "C-F5 N2",
+   "globalId": "_azUhedu1azxwL76wW22Kp",
+   "tipoIfc": "IfcColumn",
+   "nivel": 2,
+   "eje": "F-5",
+   "partida": "03.02",
+   "estado": "bloqueado",
+   "enlace": "R-02 · acero del lote 3 sin llegar ni certificar",
+   "caja": [
+    4.9,
+    3.9,
+    1.93,
+    5.1,
+    4.1,
+    2.75
+   ]
+  },
+  {
+   "nombre": "Losa N1 bloque A",
+   "globalId": "JtdbGZf2_iLe4_57T3DFCs",
+   "tipoIfc": "IfcSlab",
+   "nivel": 1,
+   "eje": "bloque A",
+   "partida": "03.03",
+   "estado": "ejecutado",
+   "enlace": "",
+   "caja": [
+    -0.4,
+    -0.4,
+    1,
+    2.5,
+    4.4,
+    1.18
+   ]
+  },
+  {
+   "nombre": "Losa N1 bloque B",
+   "globalId": "00l9YrUgn6V0ioQCwY1jWV",
+   "tipoIfc": "IfcSlab",
+   "nivel": 1,
+   "eje": "bloque B",
+   "partida": "03.03",
+   "estado": "porEjecutar",
+   "enlace": "",
+   "caja": [
+    2.5,
+    -0.4,
+    1,
+    5.4,
+    4.4,
+    1.18
+   ]
+  },
+  {
+   "nombre": "Losa N2 bloque A",
+   "globalId": "hwI58OuTiuzUQnfERJqW8W",
+   "tipoIfc": "IfcSlab",
+   "nivel": 2,
+   "eje": "bloque A",
+   "partida": "03.03",
+   "estado": "bloqueado",
+   "enlace": "R-04 · RFI-011 sin respuesta (INC-01)",
+   "caja": [
+    -0.4,
+    -0.4,
+    2.75,
+    2.5,
+    4.4,
+    2.93
+   ]
+  },
+  {
+   "nombre": "Losa N2 bloque B",
+   "globalId": "caG2fhAgI88tfUY6WRQkJo",
+   "tipoIfc": "IfcSlab",
+   "nivel": 2,
+   "eje": "bloque B",
+   "partida": "03.03",
+   "estado": "porEjecutar",
+   "enlace": "",
+   "caja": [
+    2.5,
+    -0.4,
+    2.75,
+    5.4,
+    4.4,
+    2.93
+   ]
+  },
+  {
+   "nombre": "V-203",
+   "globalId": "R4uQZKgtmHtqoTWKW_TkGp",
+   "tipoIfc": "IfcBeam",
+   "nivel": 2,
+   "eje": "C-4",
+   "partida": "03.03",
+   "estado": "bloqueado",
+   "enlace": "R-04 · RFI-011 sin respuesta (INC-01)",
+   "caja": [
+    1.86,
+    2,
+    2.47,
+    2.14,
+    3,
+    2.75
+   ]
+  },
+  {
+   "nombre": "Muros bloque de servicios",
+   "globalId": "UpXaSdHCJwU$xht95enRGG",
+   "tipoIfc": "IfcWall",
+   "nivel": 1,
+   "eje": "",
+   "partida": "04.01",
+   "estado": "anticipado",
+   "enlace": "",
+   "caja": [
+    3,
+    -0.05,
+    0.18,
+    5,
+    0.05,
+    1
+   ]
+  },
+  {
+   "nombre": "Muros eje 1, bloque A",
+   "globalId": "Oflj6oeDAijMwrmtQEqkqJ",
+   "tipoIfc": "IfcWall",
+   "nivel": 1,
+   "eje": "",
+   "partida": "04.01",
+   "estado": "anticipado",
+   "enlace": "",
+   "caja": [
+    -0.05,
+    0,
+    0.18,
+    0.05,
+    3,
+    1
+   ]
+  },
+  {
+   "nombre": "Muros bloque B",
+   "globalId": "EL7y9LXSzBYvs5WBsoq3Xw",
+   "tipoIfc": "IfcWall",
+   "nivel": 1,
+   "eje": "",
+   "partida": "04.01",
+   "estado": "porEjecutar",
+   "enlace": "",
+   "caja": [
+    4.95,
+    0.5,
+    0.18,
+    5.05,
+    4,
+    1
+   ]
+  }
+ ]
+};
 
-  function estadoClass(estado){
-    switch(estado){
-      case "Crítico": return "estado-critico";
-      case "En riesgo": return "estado-riesgo";
-      case "En plazo": return "estado-plazo";
-      case "Adelantada": return "estado-adelantada";
-      default: return "estado-ventana";
+</script>
+<script>
+(function () {
+  var R = CALC.resumen(DATOS), O = DATOS.obra, P = CALC.pct;
+  function pp(x) { return P(x).replace('-', '−') + ' pp'; }
+  function $(id) { return document.getElementById(id); }
+  var NS = 'http://www.w3.org/2000/svg';
+  function el(tag, attrs, parent, txt) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (txt !== undefined) e.textContent = txt;
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+
+  /* Cabecera */
+  $('obra').textContent = O.nombre;
+  $('meta').textContent = 'Fecha de corte: ' + O.corte + ' · Informe ' + O.informe + ' (' + O.periodo + ') · Día ' + O.dia + ' de ' + O.plazo + ' · ' + O.contratista;
+
+  /* Tarjetas */
+  var t = R.total;
+  $('tarjetas').innerHTML =
+    '<div class="card"><div class="lbl">Avance programado</div><div class="val">' + P(t.prog) + ' %</div><div class="nota">Ponderado por parcial contractual</div></div>' +
+    '<div class="card"><div class="lbl">Avance ejecutado</div><div class="val">' + P(t.ejec) + ' %</div><div class="nota">Incluye ' + P(t.anticipado) + ' % de trabajo anticipado</div></div>' +
+    '<div class="card"><div class="lbl">Atraso sin compensar</div><div class="val">' + pp(t.atraso) + '</div><div class="nota">Adelanto informado aparte: ' + pp(t.adelanto) + '</div></div>';
+
+  /* Semáforo */
+  var s = R.semaforo, cls = s.estado === 'CRÍTICO' ? 'bad' : s.estado === 'EN RIESGO' ? 'warn' : 'ok';
+  var sm = $('semaforo'); sm.classList.add(cls);
+  sm.innerHTML =
+    '<div class="estado t-' + cls + '">' + s.estado + '</div>' +
+    '<div class="det">' +
+      (s.por ? 'Lo decide la partida <b>' + s.por.nombre + '</b> (' + s.por.item + '), con una brecha de <b>' + pp(s.por.brecha) + '</b>.<br>' : '') +
+      'Atraso sin compensar de la ruta crítica: <b>' + pp(R.critica.atraso) + '</b>. ' +
+      'Umbrales: riesgo sobre ' + (CALC.UMBRAL_RIESGO * 100) + ' pp, crítico sobre ' + (CALC.UMBRAL_CRITICO * 100) + ' pp. El estado lo decide la ruta crítica, no el promedio.' +
+    '</div>';
+
+  /* Tabla */
+  var h = '<thead><tr><th>Ítem</th><th>Partida</th><th>Ruta crítica</th><th class="n">Programado</th><th class="n">Ejecutado</th><th class="n">Brecha</th><th>Estado</th></tr></thead><tbody>';
+  R.av.forEach(function (p) {
+    var c, est = CALC.estadoPartida(p), nota = est;
+    if (p.noProg) { c = 'gray'; nota = 'Trabajo anticipado'; }
+    else if (est === 'Crítico') c = 'bad';
+    else if (est === 'En riesgo') c = 'warn';
+    else c = 'ok';
+    h += '<tr class="' + c + '"><td>' + p.item + '</td><td>' + p.nombre + '</td>' +
+      '<td>' + (p.critica ? '<span class="tag rc">RUTA CRÍTICA</span>' : '') + '</td>' +
+      '<td class="n">' + P(p.prog) + ' %</td><td class="n">' + P(p.ejec) + ' %</td>' +
+      '<td class="n">' + (p.noProg ? '—' : pp(p.brecha)) + '</td><td class="estado-c">' + nota + '</td></tr>';
+  });
+  $('tabla').innerHTML = h + '</tbody>';
+  $('leyenda').innerHTML =
+    '<span><i style="background:var(--bad-bg);border:1px solid var(--bad)"></i>Crítico: brecha sobre ' + (CALC.UMBRAL_CRITICO * 100) + ' pp</span>' +
+    '<span><i style="background:var(--warn-bg);border:1px solid var(--warn)"></i>En riesgo: sobre ' + (CALC.UMBRAL_RIESGO * 100) + ' pp</span>' +
+    '<span><i style="background:var(--ok-bg);border:1px solid var(--ok)"></i>En plazo o adelantada</span>' +
+    '<span><i style="background:var(--gray-bg);border:1px solid var(--gray)"></i>Aún no entra en su ventana: sin brecha</span>';
+
+  /* Curva S */
+  (function () {
+    var C = DATOS.curvaS, W = 640, H = 340, m = { l: 40, r: 14, t: 14, b: 34 };
+    var iw = W - m.l - m.r, ih = H - m.t - m.b;
+    var n = C.length, x0 = C[0].sem, x1 = C[n - 1].sem;
+    function X(v) { return m.l + (v - x0) / (x1 - x0) * iw; }
+    function Y(v) { return m.t + (1 - v / 100) * ih; }
+    var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': 'Curva S: programado y ejecutado, total y ruta crítica' }, $('curva'));
+    for (var g = 0; g <= 100; g += 20) {
+      el('line', { x1: m.l, x2: W - m.r, y1: Y(g), y2: Y(g), 'class': 'grid' }, svg);
+      el('text', { x: m.l - 6, y: Y(g) + 4, 'text-anchor': 'end' }, svg, g + ' %');
     }
-  }
-
-  var sortKey = "item", sortDir = 1;
-  var searchTerm = "";
-
-  function render(){
-    var rows = partidas.filter(function(p){
-      return p.partida.toLowerCase().indexOf(searchTerm) !== -1 || p.item.indexOf(searchTerm) !== -1;
+    C.forEach(function (d) {
+      if ((d.sem - x0) % 2 === 0) el('text', { x: X(d.sem), y: H - 14, 'text-anchor': 'middle' }, svg, 'S' + d.sem);
     });
-    rows.sort(function(a,b){
-      var av = a[sortKey], bv = b[sortKey];
-      if (sortKey === "brecha_pp"){ av = av === null ? -999 : av; bv = bv === null ? -999 : bv; }
-      if (typeof av === "string") return sortDir * av.localeCompare(bv, "es");
-      return sortDir * ((av>bv) - (av<bv));
+    el('line', { x1: m.l, x2: W - m.r, y1: Y(0), y2: Y(0), 'class': 'ax' }, svg);
+    var corteSem = DATOS.obra.informe;
+    el('line', { x1: X(corteSem), x2: X(corteSem), y1: m.t, y2: Y(0), stroke: 'var(--mut)', 'stroke-dasharray': '2 4' }, svg);
+    el('text', { x: X(corteSem) - 4, y: m.t + 10, 'text-anchor': 'end' }, svg, 'Corte S' + corteSem);
+    function linea(key, color, dash, w) {
+      var pts = C.filter(function (d) { return d[key] !== null && d[key] !== undefined; })
+                 .map(function (d) { return X(d.sem).toFixed(1) + ',' + Y(d[key]).toFixed(1); });
+      el('polyline', { points: pts.join(' '), fill: 'none', stroke: color, 'stroke-width': w, 'stroke-dasharray': dash || '', 'stroke-linejoin': 'round' }, svg);
+    }
+    linea('progT', 'var(--prog)', '6 4', 2);
+    linea('ejecT', 'var(--ejec)', '', 2.5);
+    linea('progC', 'var(--crit)', '6 4', 2);
+    linea('ejecC', 'var(--crit)', '', 2.5);
+    var u = C.filter(function (d) { return d.ejecT !== null; }).pop();
+    [['ejecT', 'var(--ejec)'], ['ejecC', 'var(--crit)']].forEach(function (k) {
+      el('circle', { cx: X(u.sem), cy: Y(u[k[0]]), r: 4, fill: k[1] }, svg);
+      el('text', { x: X(u.sem) + 6, y: Y(u[k[0]]) + 14, 'text-anchor': 'start' }, svg, P(u[k[0]] / 100) + ' %');
     });
-
-    var tbody = document.getElementById("tbody-partidas");
-    tbody.innerHTML = rows.map(function(p){
-      var brechaTxt = p.brecha_pp === null ? "·" : (p.brecha_pp > 0 ? "+" : "") + fmt1(p.brecha_pp) + " pp";
-      var brechaClass = p.brecha_pp === null ? "" : (p.brecha_pp > 0 ? "neg" : "pos");
-      return (
-        '<tr class="' + (p.estado === "Crítico" ? "is-critical" : "") + '">' +
-          '<td class="item-cell mono">' + p.item + '</td>' +
-          '<td><span class="partida-cell">' + p.partida + (p.rc ? ' <span class="rc-badge">RC</span>' : '') + '</span></td>' +
-          '<td class="mono">' + fmt1(p.peso_pct) + ' %</td>' +
-          '<td><div class="bars">' +
-            '<div class="bar-track"><div class="bar-fill programado" style="width:' + p.programado_pct + '%"></div></div>' +
-            '<div class="bar-track"><div class="bar-fill ejecutado" style="width:' + p.ejecutado_pct + '%"></div></div>' +
-            '<div class="bar-caption mono"><span>P ' + fmt1(p.programado_pct) + '%</span><span>E ' + fmt1(p.ejecutado_pct) + '%</span></div>' +
-          '</div></td>' +
-          '<td class="brecha mono ' + brechaClass + '">' + brechaTxt + '</td>' +
-          '<td><span class="estado-pill ' + estadoClass(p.estado) + '">' + p.estado + '</span></td>' +
-        '</tr>'
-      );
-    }).join("");
-  }
-
-  document.querySelectorAll("#tabla-partidas thead th").forEach(function(th){
-    th.addEventListener("click", function(){
-      var key = th.getAttribute("data-key");
-      if (sortKey === key){ sortDir *= -1; } else { sortKey = key; sortDir = (key === "partida" || key === "estado") ? 1 : -1; }
-      document.querySelectorAll("#tabla-partidas thead .arrow").forEach(function(a){ a.textContent = "↕"; });
-      th.querySelector(".arrow").textContent = sortDir === 1 ? "↑" : "↓";
-      render();
+    var lg = $('lgCurva');
+    [['Total programado', 'var(--prog)', '6 4'], ['Total ejecutado', 'var(--ejec)', ''], ['Ruta crítica programado', 'var(--crit)', '6 4'], ['Ruta crítica ejecutado', 'var(--crit)', '']].forEach(function (k) {
+      var sp = document.createElement('span');
+      sp.innerHTML = '<svg viewBox="0 0 26 8"><line x1="0" x2="26" y1="4" y2="4" stroke="' + k[1] + '" stroke-width="2.5" stroke-dasharray="' + k[2] + '"/></svg>' + k[0];
+      lg.appendChild(sp);
     });
+  })();
+
+  /* PPC */
+  (function () {
+    var D = DATOS.ppc.slice(-8), META = 80, W = 420, H = 340, m = { l: 40, r: 12, t: 16, b: 34 };
+    var iw = W - m.l - m.r, ih = H - m.t - m.b, bw = iw / D.length;
+    function Y(v) { return m.t + (1 - v / 100) * ih; }
+    var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': 'PPC de las últimas ocho semanas con meta de 80 %' }, $('ppc'));
+    for (var g = 0; g <= 100; g += 20) {
+      el('line', { x1: m.l, x2: W - m.r, y1: Y(g), y2: Y(g), 'class': 'grid' }, svg);
+      el('text', { x: m.l - 6, y: Y(g) + 4, 'text-anchor': 'end' }, svg, g + ' %');
+    }
+    D.forEach(function (d, i) {
+      var x = m.l + i * bw + bw * 0.18, w = bw * 0.64, ok = d.ppc >= META;
+      el('rect', { x: x, y: Y(d.ppc), width: w, height: Y(0) - Y(d.ppc), rx: 3, fill: ok ? 'var(--ok)' : 'var(--warn)' }, svg);
+      el('text', { x: x + w / 2, y: Y(d.ppc) - 5, 'text-anchor': 'middle', style: 'fill:var(--ink);font-weight:600' }, svg, P(d.ppc / 100) + ' %');
+      el('text', { x: x + w / 2, y: H - 14, 'text-anchor': 'middle' }, svg, 'S' + d.sem);
+    });
+    el('line', { x1: m.l, x2: W - m.r, y1: Y(0), y2: Y(0), 'class': 'ax' }, svg);
+    el('line', { x1: m.l, x2: W - m.r, y1: Y(META), y2: Y(META), stroke: 'var(--bad)', 'stroke-width': 1.8, 'stroke-dasharray': '6 4' }, svg);
+    el('text', { x: W - m.r, y: Y(META) - 5, 'text-anchor': 'end', style: 'fill:var(--bad);font-weight:600' }, svg, 'Meta ' + META + ' %');
+    var lg = $('lgPpc');
+    lg.innerHTML = '<span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--ok)"></i>Cumple la meta</span>' +
+                   '<span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--warn)"></i>Bajo la meta</span>';
+  })();
+
+  /* Restricciones */
+  var RS = DATOS.restricciones.slice().sort(function (a, b) { return a.dias - b.dias; });
+  function claseR(r) { return r.estado === 'Liberada' ? 'r-lib' : (r.dias < 7 ? 'r-ven' : 'r-res'); }
+  var nLib = RS.filter(function (r) { return r.estado === 'Liberada'; }).length;
+  var pend = RS.filter(function (r) { return r.estado !== 'Liberada'; });
+  var nVen = pend.filter(function (r) { return r.dias < 7; }).length;
+  $('contR').innerHTML =
+    '<div class="card lib"><div class="lbl">Liberadas</div><div class="val">' + nLib + '</div></div>' +
+    '<div class="card pen"><div class="lbl">Pendientes</div><div class="val">' + pend.length + '</div></div>' +
+    '<div class="card ven"><div class="lbl">Vencen en menos de 7 días</div><div class="val">' + nVen + '</div></div>';
+  var hr = '<thead><tr><th>Id</th><th>Restricción</th><th>Partida</th><th>Responsable</th><th>Fecha requerida</th><th class="n">Días</th><th>Estado</th></tr></thead><tbody>';
+  RS.forEach(function (r) {
+    hr += '<tr class="' + claseR(r) + '"><td>' + r.id + '</td><td class="wrap">' + r.desc + '</td><td>' + r.partida + '</td><td>' + r.resp + '</td><td>' + r.req + '</td><td class="n">' + r.dias + '</td><td class="est">' + (r.estado === 'Liberada' ? 'Liberada' : (r.dias < 7 ? 'Pendiente · vence pronto' : 'Pendiente')) + '</td></tr>';
   });
+  $('tablaR').innerHTML = hr + '</tbody>';
+  $('leyR').innerHTML =
+    '<span><i style="background:var(--ok-bg);border:1px solid var(--ok)"></i>Liberada</span>' +
+    '<span><i style="background:var(--warn-bg);border:1px solid var(--warn)"></i>Pendiente que vence en menos de 7 días</span>' +
+    '<span><i style="border:1px solid var(--line)"></i>Resto de pendientes</span>' +
+    '<span>Ordenadas por días para la fecha requerida</span>';
 
-  document.getElementById("search").addEventListener("input", function(e){
-    searchTerm = e.target.value.trim().toLowerCase();
-    render();
-  });
+  /* Visor del modelo */
+  (function () {
+    var M = MODELO_DATA, E = M.elementos, ST = M.estados, cv = $('cv'), ctx = cv.getContext('2d');
+    var partNom = {}; DATOS.partidas.forEach(function (p) { partNom[p.item] = p.nombre; });
+    var selNivel = 'todos', selEst = {}, sel = null, items = [], scale = 1, ox = 0, oy = 0, cw = 0, ch = 0;
+    Object.keys(ST).forEach(function (k) { selEst[k] = true; });
 
-  render();
+    function pr(x, y, z) { return [(x - y) * 0.866, (x + y) * 0.5 - z]; }
+    items = E.map(function (e, i) {
+      var b = e.caja, x0 = b[0], y0 = b[1], z0 = b[2], x1 = b[3], y1 = b[4], z1 = b[5];
+      return { e: e, depth: (x0 + x1 + y0 + y1 + z0 + z1) / 2,
+        top: [pr(x0, y0, z1), pr(x1, y0, z1), pr(x1, y1, z1), pr(x0, y1, z1)],
+        dcha: [pr(x1, y0, z1), pr(x1, y1, z1), pr(x1, y1, z0), pr(x1, y0, z0)],
+        izq: [pr(x0, y1, z1), pr(x1, y1, z1), pr(x1, y1, z0), pr(x0, y1, z0)] };
+    }).sort(function (a, b) { return a.depth - b.depth; });
+    var minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
+    items.forEach(function (it) { it.top.concat(it.dcha, it.izq).forEach(function (q) {
+      minX = Math.min(minX, q[0]); maxX = Math.max(maxX, q[0]); minY = Math.min(minY, q[1]); maxY = Math.max(maxY, q[1]); }); });
 
-  var listR = document.getElementById("list-restricciones");
-  listR.innerHTML = restricciones.map(function(r){
-    var cls = r.dias <= 2 ? "urgent" : (r.dias <= 4 ? "soon" : "ok");
-    return (
-      '<div class="list-item">' +
-        '<span class="chip-days ' + cls + '">' + r.dias + ' d</span>' +
-        '<div class="list-body">' +
-          '<span class="list-title">' + r.texto + '</span>' +
-          '<span class="list-meta">' + r.id + ' · ' + r.partida + ' · ' + r.responsable + '</span>' +
-        '</div>' +
-      '</div>'
-    );
-  }).join("");
-
-  var listI = document.getElementById("list-incompatibilidades");
-  listI.innerHTML = incompatibilidades.map(function(i){
-    var sevClass = i.severidad === "Alta" ? "sev-alta" : (i.severidad === "Media" ? "sev-media" : "sev-baja");
-    return (
-      '<div class="list-item">' +
-        '<span class="sev-pill ' + sevClass + '">' + i.severidad + '</span>' +
-        '<div class="list-body">' +
-          '<span class="list-title">' + i.texto + '</span>' +
-          '<span class="list-meta">' + i.id + ' · ' + i.doc + '</span>' +
-        '</div>' +
-      '</div>'
-    );
-  }).join("");
+    function visible(e) { return (selNivel === 'todos' || String(e.nivel) === selNivel) && selEst[e.estado]; }
+    function tr(q) { return [q[0] * scale + ox, q[1] * scale + oy]; }
+    function poly(pts, fill, stroke, lw) {
+      ctx.beginPath(); pts.forEach(function (q, i) { var t = tr(q); i ? ctx.lineTo(t[0], t[1]) : ctx.moveTo(t[0], t[1]); }); ctx.closePath();
+      if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw || 1; ctx.stroke(); }
+    }
+    function resize() {
+      var r = cv.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+      cw = r.width; ch = r.height; cv.width = Math.round(cw * d); cv.height = Math.round(ch * d); ctx.setTransform(d, 0, 0, d, 0, 0);
+      scale = Math.min((cw - 30) / (maxX - minX), (ch - 30) / (maxY - minY));
+      ox = (cw - (maxX - minX) * scale) / 2 - minX * scale; oy = (ch - (maxY - minY) * scale) / 2 - minY * scale;
+      draw();
+    }
+    function shade(hex, f) {
+      var n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+      function c(v) { return Math.max(0, Math.min(255, Math.round(v * f))); } return 'rgb(' + c(r) + ',' + c(g) + ',' + c(b) + ')';
+    }
+    function draw() {
+      ctx.clearRect(0, 0, cw, ch);
+      items.forEach(function (it) {
+        var col = ST[it.e.estado].c, on = visible(it.e);
+        ctx.globalAlpha = on ? 1 : 0.1;
+        poly(it.izq, shade(col, 0.78), 'rgba(0,0,0,.35)', 0.7);
+        poly(it.dcha, shade(col, 0.6), 'rgba(0,0,0,.35)', 0.7);
+        poly(it.top, shade(col, 1.08), 'rgba(0,0,0,.35)', 0.7);
+      });
+      ctx.globalAlpha = 1;
+      if (sel) { poly(sel.top, null, '#000', 2.5); poly(sel.dcha, null, '#000', 2.5); poly(sel.izq, null, '#000', 2.5); }
+    }
+    function dentro(pts, x, y) {
+      var ins = false, n = pts.length;
+      for (var i = 0, j = n - 1; i < n; j = i++) {
+        var a = tr(pts[i]), b = tr(pts[j]);
+        if (((a[1] > y) !== (b[1] > y)) && (x < (b[0] - a[0]) * (y - a[1]) / (b[1] - a[1]) + a[0])) ins = !ins;
+      } return ins;
+    }
+    function pick(x, y) {
+      for (var i = items.length - 1; i >= 0; i--) {
+        var it = items[i]; if (!visible(it.e)) continue;
+        if (dentro(it.top, x, y) || dentro(it.dcha, x, y) || dentro(it.izq, x, y)) return it;
+      } return null;
+    }
+    function detalle() {
+      var pn = $('panel');
+      if (!sel) { pn.innerHTML = '<span class="vacio">Haz clic en un elemento del modelo para ver su detalle.</span>'; return; }
+      var e = sel.e, bloq = e.enlace ? e.enlace : 'Ninguna';
+      var idm = /^R-\d+/.exec(e.enlace || ''), extra = '';
+      if (idm) { var rr = DATOS.restricciones.filter(function (r) { return r.id === idm[0]; })[0];
+        if (rr) extra = '<br><span class="vacio">Responsable: ' + rr.resp + ' · requerida ' + rr.req + '</span>'; }
+      pn.innerHTML = '<b>' + e.nombre + '</b> <span class="vacio">(' + e.tipoIfc + ')</span>' +
+        '<dl><dt>GlobalId</dt><dd>' + e.globalId + '</dd>' +
+        '<dt>Nivel</dt><dd>' + e.nivel + '</dd>' +
+        '<dt>Partida</dt><dd>' + e.partida + ' · ' + (partNom[e.partida] || '') + '</dd>' +
+        '<dt>Estado</dt><dd><i style="display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:6px;background:' + ST[e.estado].c + '"></i>' + ST[e.estado].n + '</dd>' +
+        '<dt>Restricción que lo bloquea</dt><dd>' + bloq + extra + '</dd></dl>';
+    }
+    cv.addEventListener('click', function (ev) {
+      var r = cv.getBoundingClientRect(); sel = pick(ev.clientX - r.left, ev.clientY - r.top); draw(); detalle();
+    });
+    /* Filtros */
+    var fn = $('fNivel'), niveles = []; E.forEach(function (e) { if (niveles.indexOf(e.nivel) < 0) niveles.push(e.nivel); }); niveles.sort();
+    fn.innerHTML = '<option value="todos">Todos</option>' + niveles.map(function (n) { return '<option value="' + n + '">Nivel ' + n + '</option>'; }).join('');
+    fn.addEventListener('change', function () { selNivel = fn.value; if (sel && !visible(sel.e)) { sel = null; detalle(); } draw(); });
+    var chips = $('chips');
+    Object.keys(ST).forEach(function (k) {
+      var n = E.filter(function (e) { return e.estado === k; }).length, b = document.createElement('button');
+      b.type = 'button'; b.className = 'chip'; b.setAttribute('aria-pressed', 'true');
+      b.innerHTML = '<i style="background:' + ST[k].c + '"></i>' + ST[k].n + ' (' + n + ')';
+      b.addEventListener('click', function () {
+        selEst[k] = !selEst[k]; b.setAttribute('aria-pressed', selEst[k]); if (sel && !visible(sel.e)) { sel = null; detalle(); } draw();
+      });
+      chips.appendChild(b);
+    });
+    window.addEventListener('resize', resize);
+    window.TABLERO = { posElemento: function (nombre) { var it = items.filter(function (i) { return i.e.nombre === nombre; })[0], q = it.top.concat(it.dcha, it.izq), sx = 0, sy = 0;
+      q.forEach(function (p) { var t = tr(p); sx += t[0]; sy += t[1]; }); var r = cv.getBoundingClientRect(); return [r.left + sx / q.length, r.top + sy / q.length]; } };
+    resize();
+  })();
 })();
 </script>
 </body>
